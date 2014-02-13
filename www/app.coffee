@@ -3,20 +3,6 @@ enchant()
 WIDTH  = 320
 HEIGHT = 480
 
-LOG = [
-  (txt:'ナベリオン達があらわれた！')
-  (txt:'ハルヒロのファイアソード！<br/>ナベリオンに100ダメージ！', actor:0, damage:(2:100))
-  (txt:'ナベリオンのファイアソード！<br/>ハルヒロに100ダメージ！', actor:2, damage:(0:100))
-  (txt:'ナベ助のファイアソード！<br/>スク水子に50ダメージ！', actor:3, damage:(1:50))
-  (txt:'スク水子のマグロソード！<br/>ナベリオンに200ダメージ！<br/>ナベリオンは倒れた！', actor:1, damage:(2:200))
-  (txt:'ハルヒロのファイアソード！<br/>ナベ助に100ダメージ！', actor:0, damage:(3:100))
-  (txt:'ナベ助のファイアソード！<br/>スク水子に50ダメージ！', actor:3, damage:(1:50))
-  (txt:'スク水子のマグロソード！<br/>ナベ助に200ダメージ！<br/>ナベ助は倒れた！', actor:1, damage:(3:200))
-  (txt:'戦闘に勝利した！')
-  (txt:'ハルヒロは1の攻撃expを手に入れた')
-  (txt:'ナベリオンが仲間になった！')
-]
-
 Avatar.prototype.loadImage = ->
   code = @getCode().replace /:/g, '_'
   surface = enchant.Surface.load 'img/' + code + '.gif', =>
@@ -25,6 +11,14 @@ Avatar.prototype.loadImage = ->
 itemHeight = 48
 herosPerTeam = 4
 dungeonHeros = []
+heros = [
+  new rpg.Hero.create(
+    Math.random() + '',
+    {attack:15, block:15, speed:15, health:15},
+    {attack:15, block:15, speed:15, health:15}
+  ),
+]
+heros[0].name = 'ハルヒロ'
 
 dungeonScene = ->
   bg = new Sprite WIDTH, HEIGHT
@@ -55,8 +49,9 @@ dungeonScene = ->
   commit.alignRightIn(bg, 10).alignBottomIn(bg, 10)
   commit.ontouchstart = ->
     return if dungeonHeros.length < 1
+    result = new rpg.Dungeon().solveAuto dungeonHeros
     Core.instance.popScene()
-    Core.instance.replaceScene battleScene()
+    Core.instance.replaceScene battleScene(result)
   scene = new Scene
   scene.addChild bg
   scene.addChild team
@@ -127,17 +122,13 @@ teamSelectScene = ->
   scene.addChild herosList
   return scene
 
-heros = [
-  (id: 0, name: 'ハルヒロ', exp: 0)
-]
-
 class Detail extends EntityGroup
   constructor: (margin, hero, button) ->
     EntityGroup.call this, WIDTH - margin, HEIGHT - margin
     np = new enchant.widget.Ninepatch @width, @height
     np.src = Core.instance.assets['dialog.png']
     avatar = new Avatar '1:2:1:2597:21270:0'
-    exp = new Label('exp: ' + hero.exp)
+    exp = new Label('exp: ' + hero.effort.attack)
     exp.alignBottomOf(avatar).alignLeftIn(avatar, 10)
     close = new Button 'X'
     close.alignRightIn(this, -10).alignTopIn(this, -10)
@@ -158,7 +149,7 @@ class DetailScene extends Modal
     detail.alignHorizontalCenterIn(this).alignVerticalCenterIn this
     @addChild detail
 
-battleScene = ->
+battleScene = (result) ->
   bg = new AvatarBG 1
   boy = new Avatar '1:2:1:2597:21270:0'
   boy.y = 48
@@ -169,13 +160,23 @@ battleScene = ->
   list = new ListView WIDTH, HEIGHT - 176
   list.y = 176
   index = 0
+  log = []
+  result = result.battles[0]
+  for turn in result.turns
+    for act in turn
+      actor = result.heros.h[act.actor].hero.name
+      target = result.heros.h[act.target].hero.name
+      skill = result.heros.h[act.actor].hero.skills[act.skill].name
+      log.push "#{actor}の#{skill}!<br/>#{target}に#{act.effect}ダメージ!"
   applyLog = ->
-    if index >= LOG.length
-      hero.exp++ for hero in heros
-      heros.push (id: heros.length, exp: 0, name: 'ナベリオン')
+    if index >= log.length
+      # apply effort
+      #hero.exp++ for hero in heros
+      # get new hero
+      #heros.push (id: heros.length, exp: 0, name: 'ナベリオン')
       Core.instance.replaceScene mapScene()
       return
-    item = new ListItem WIDTH, 48, LOG[index].txt
+    item = new ListItem WIDTH, 48, log[index]
     list.addChild item
     index++
   applyLog()
