@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>dungeon</title>
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <style>
+body {
+  padding-bottom:70px;
+}
+.hero {
+    display:inline-block;
+    overflow:hidden;
+    background-repeat: no-repeat;
+    background-image:url(img/1_2_1_2597_21270_0.gif);
+    width:64px;
+    height:64px;
+    vertical-align:middle;
+}
+    </style>
+  </head>
+  <body>
+  <div class="container">
+    <div class="page-header">
+      <h1>トキワの森</h1>
+      <p>薄暗い森。ピカチュウとか出てくる。</p>
+    </div>
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <h3 class="panel-title">パーティ</h3>
+        </div>
+        <div class="panel-body">
+            <div class="list-group">
+                <a href="#" class="list-group-item">
+                    <!-- <img src="hero.png"/> -->
+                    <span class="hero"></span>
+                    ハルヒロ
+                    <div class="progress progress-striped active">
+                        <div class="progress-bar progress-bar-success" role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" style="width: 60%;">
+                            60/100
+                        </div>
+                    </div>
+                </a>
+                <a href="#" class="list-group-item">---<span class="glyphicon glyphicon-chevron-right pull-right"></span></a>
+                <a href="#" class="list-group-item">---<span class="glyphicon glyphicon-chevron-right pull-right"></span></a>
+                <a href="#" class="list-group-item">---<span class="glyphicon glyphicon-chevron-right pull-right"></span></a>
+            </div>
+        </div>
+    </div>
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <h3 class="panel-title">目的地</h3>
+        </div>
+        <div class="panel-body">
+            <select class="form-control">
+                <option>1</option>
+                <option>2</option>
+                <option>3</option>
+            </select>
+        </div>
+    </div>
+    <nav class="navbar navbar-default navbar-fixed-bottom" role="navigation">
+      <div class="container-fluid">
+        <div class="row">
+          <div class="col-xs-6">
+            <button type="button" class="btn btn-default btn-lg btn-block navbar-btn">戻る</button>
+          </div>
+          <div class="col-xs-6">
+            <button type="button" class="btn btn-primary btn-lg btn-block navbar-btn">出発</button>
+          </div>
+        </div>
+      </div>
+    </nav>
+    <script src="js/jquery.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+</div>
+  </body>
+</html>
