@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>dungeon</title>
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <style>
+body {
+  padding-bottom:70px;
+}
+.hero {
+    display:inline-block;
+    overflow:hidden;
+    background-repeat: no-repeat;
+    background-image:url(img/1_2_1_2597_21270_0.gif);
+    width:64px;
+    height:64px;
+    vertical-align:middle;
+}
+    </style>
+  </head>
+  <body>
+  <div class="container">
+    <div class="page-header">
+      <span class="hero pull-left"><span class="glyphicon glyphicon-fire" style="color:red"></span></span>
+      <h1>ハルヒロ</h1>
+      <p>攻撃的な性格</p>
+      <div class="progress progress-striped active">
+          <div class="progress-bar progress-bar-success" role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" style="width: 60%;">
+              60/100
+          </div>
+      </div>
+    </div>
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <h3 class="panel-title">スキル</h3>
+        </div>
+        <div class="panel-body">
+            <div class="list-group">
+                <a href="#" class="list-group-item"><span class="glyphicon glyphicon-fire" style="color:red"></span>炎のパンチ<span class="glyphicon glyphicon-chevron-right pull-right"></span></a>
+                <a href="#" class="list-group-item">---<span class="glyphicon glyphicon-chevron-right pull-right"></span></a>
+            </div>
+        </div>
+    </div>
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <h3 class="panel-title">パラメータ</h3>
+        </div>
+        <div class="panel-body">
+            <canvas id="chart" class="center-block" width="240" height="240"></canvas>
+        </div>
+    </div>
+    <nav class="navbar navbar-default navbar-fixed-bottom" role="navigation">
+      <div class="container-fluid">
+        <div class="row">
+          <div class="col-xs-6">
+            <button type="button" class="btn btn-default btn-lg btn-block navbar-btn">戻る</button>
+          </div>
+          <div class="col-xs-6">
+            <button type="button" class="btn btn-primary btn-lg btn-block navbar-btn">パーティに入れる</button>
+          </div>
+        </div>
+      </div>
+    </nav>
+    <script src="js/jquery.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="js/Chart.min.js"></script>
+    <script>
+    
+    
+   var radarChartData = {
+    labels : ['攻撃', '防御', '速度', '体力'],
+    datasets : [
+        {
+            fillColor : "rgba(220, 220, 220, 0.5)",
+            strokeColor : "rgba(220, 220, 220, 1)",
+            pointColor : "rgba(220, 220, 220, 1)",
+            pointStrokeColor : "#fff",
+            data : [1, 59, 90, 81]
+        },
+        {
+            fillColor : "rgba(151, 187, 205, 0.5)",
+            strokeColor : "rgba(151, 187, 205, 1)",
+            pointColor : "rgba(151, 187, 205, 1)",
+            pointStrokeColor : "#fff",
+            data : [28, 48, 40, 19]
+        }
+    ]
+}
+// オプション
+var options = {
+    // 値のラインが棒グラフの値の上にかぶさるようにするか    
+    scaleOverlay : false,
+    // 値の開始値などを自分で設定するか
+    scaleOverride : false,
+    
+    // 以下の 3 オプションは scaleOverride: true の時に使用
+    // 値のステップ数
+    scaleSteps : 10,
+    // 値のステップする大きさ
+    scaleStepWidth : 10,
+    // 値の始まりの値
+    scaleStartValue : 0,
+    // 値の円ラインの表示
+    scaleShowLine : true,
+    // 円ラインの色
+    scaleLineColor : "rgba(0, 0, 0, .1)",
+    // 円ラインの幅
+    scaleLineWidth : 1,
+    // ラベルの表示
+    scaleShowLabels : false,
+    // ラベルの表示フォーマット
+    scaleLabel : "<%=value%>%",
+    // ラベルのフォント
+    scaleFontFamily : "'Arial'",
+    // ラベルのフォントサイズ
+    scaleFontSize : 12,
+    // ラベルのフォントスタイル, normal, italic など
+    scaleFontStyle : "italic",
+    // ラベルの文字色
+    scaleFontColor : "#666",    
+    // ラベルの背景色を塗りつぶすか
+    scaleShowLabelBackdrop : true,
+    // ラベルの背景色
+    scaleBackdropColor : "rgba(255, 255, 255, 0.8)",
+    // ラベルの Padding 上下
+    scaleBackdropPaddingY : 5,
+    // ラベルの Padding 左右
+    scaleBackdropPaddingX : 5,
+    // 中央からポイントラベルに向かう線の表示
+    angleShowLineOut : true,
+    // 中央からポイントラベルに向かう線の色
+    angleLineColor : "rgba(0, 0, 0, .1)",
+    // 中央からポイントラベルに向かう線の幅
+    angleLineWidth : 1,            
+    // ポイントラベルのフォント
+    pointLabelFontFamily : "'Arial'",
+    // ポイントラベルのフォントスタイル
+    pointLabelFontStyle : "normal",
+    // ポイントラベルのサイズ
+    pointLabelFontSize : 12,
+    // ポイントラベルの色
+    pointLabelFontColor : "#999",
+    // 値の点の表示
+    pointDot : true,
+    // 値の点の大きさ
+    pointDotRadius : 2,
+    // 値の点の線の幅
+    pointDotStrokeWidth : 1,
+    // データ部分の枠線の表示？変化がなかった
+    datasetStroke : true,
+    // データ部分の枠線の幅
+    datasetStrokeWidth : 1,
+    // データ部分の塗りつぶし？変化がなかった
+    datasetFill : true,
+    // 表示の時のアニメーション
+    animation : false,
+    // アニメーションの速度 ( ステップ数 )
+    animationSteps : 60,
+    // アニメーションの種類, 以下が用意されている
+    // linear, easeInQuad, easeOutQuad, easeInOutQuad, easeInCubic, easeOutCubic,
+    // easeInOutCubic, easeInQuart, easeOutQuart, easeInOutQuart, easeInQuint,
+    // easeOutQuint, easeInOutQuint, easeInSine, easeOutSine, easeInOutSine,
+    // easeInExpo, easeOutExpo, easeInOutExpo, easeInCirc, easeOutCirc, easeInOutCirc,
+    // easeInElastic, easeOutElastic, easeInOutElastic, easeInBack, easeOutBack,
+    // easeInOutBack, easeInBounce, easeOutBounce, easeInOutBounce
+    animationEasing : "easeOutQuad",
+    // アニメーション終了後に実行する処理
+    // animation: false の時にも実行されるようです
+    // e.g. onAnimationComplete : function() {alert('complete');}
+    onAnimationComplete : null
+}
+var chart = new Chart(document.getElementById("chart").getContext("2d")).Radar(radarChartData, options); 
+    
+    
+    </script>
+</div>
+  </body>
+</html>
