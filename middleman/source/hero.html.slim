@@ -1,0 +1,43 @@
+---
+title: hero
+---
+
+.page-header
+  span.hero.pull-left
+    span.glyphicon.glyphicon-fire style="color:red;"
+  h1 ハルヒロ
+  p 攻撃的な性格
+  .progress.progress-striped.active
+    .progress-bar.progress-bar-success role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" style="width: 60%;"
+
+.panel.panel-default
+  .panel-heading
+    h3.panel-title スキル
+  .panel-body
+    .list-group
+      a.list-group-item href="#"
+        span.glyphicon.glyphicon-fire style="color:red;"
+        | 炎のパンチ
+        span.glyphicon.glyphicon-chevron-right.pull-right
+      a.list-group-item href="#"
+        | ---
+        span.glyphicon.glyphicon-chevron-right.pull-right
+
+.panel.panel-default
+  .panel-heading
+    h3.panel-title パラメータ
+  .panel-body
+    canvas#chart.center-block width="240" height="240"
+
+
+nav.navbar.navbar-default.navbar-fixed-bottom role="navigation"
+  .container-fluid
+    .row
+      .col-xs-6
+        button.btn.btn-default.btn-lg.btn-block.navbar-btn type="button" 戻る
+      .col-xs-6
+        button.btn.btn-primary.btn-lg.btn-block.navbar-btn type="button" パーティに入れる
+
+- content_for :post_script do
+    script src="js/vendor/Chart.min.js"
+    script src="js/hero.js"
