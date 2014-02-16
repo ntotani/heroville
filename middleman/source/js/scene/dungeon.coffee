@@ -16,3 +16,6 @@ $ ->
     teamTpl: (hero) -> if hero then 'hero' else 'empty'
     depth: [1..dungeon.depth].map (e) -> (txt:"#{dungeon.preDepth}#{e}#{dungeon.postDepth}", value:e)
   ko.applyBindings vm
+  $('#commit').click ->
+    service.dungeon.commit()
+    location.href = 'battle.html'

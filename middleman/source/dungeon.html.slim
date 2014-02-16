@@ -13,15 +13,13 @@ title: dungeon
     .list-group data-bind="template:{name:teamTpl, foreach:team}"
 
 script#hero type="text/html"
-  a.list-group-item href="hero.html"
+  a.list-group-item
     span.pull-left data-bind="css:'hero-' + color"
     span data-bind="text:name"
-    .progress.active data-bind="css:{'progress-striped':hp != maxHp}"
-      .progress-bar.progress-bar-success role="progressbar" aria-valuemin="0" aria-valuemax="100" data-bind="attr:{'aria-valuenow':hpRate},style:{width:hpRate + '%'}"
-        span data-bind="text:hp + '/' + maxHp"
+    = partial "layouts/hpgauge"
 
 script#empty type="text/html"
-  a.list-group-item href="#"
+  a.list-group-item
     | ---
     span.glyphicon.glyphicon-chevron-right.pull-right
 
@@ -35,9 +33,9 @@ script#empty type="text/html"
   .container-fluid
 .row
   .col-xs-6
-    button.btn.btn-default.btn-lg.btn-block.navbar-btn type="button" 戻る
+    a.btn.btn-default.btn-lg.btn-block.navbar-btn href="javascript:history.back()" role="button" 戻る
   .col-xs-6
-    a.btn.btn-primary.btn-lg.btn-block.navbar-btn href="battle.html" role="button" 出発
+    button#commit.btn.btn-primary.btn-lg.btn-block.navbar-btn type="button" 出発
 
 - content_for :post_script do
   script src="js/vendor/knockout-3.0.0.js"

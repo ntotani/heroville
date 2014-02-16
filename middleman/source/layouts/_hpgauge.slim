@@ -1,0 +1,3 @@
+.progress.active data-bind="css:{'progress-striped':hp != maxHp}"
+  .progress-bar.progress-bar-success role="progressbar" aria-valuemin="0" aria-valuemax="100" data-bind="attr:{'aria-valuenow':hpRate},style:{width:hpRate + '%'}"
+    span data-bind="text:hp + '/' + maxHp"

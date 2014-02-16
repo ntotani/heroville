@@ -3,25 +3,20 @@ title: hero
 ---
 
 .page-header
-  span.hero.pull-left
-    span.glyphicon.glyphicon-fire style="color:red;"
-  h1 ハルヒロ
-  p 攻撃的な性格
-  .progress.progress-striped.active
-    .progress-bar.progress-bar-success role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" style="width: 60%;"
+  span.pull-left data-bind="css:'hero-' + color"
+    span data-bind="css:color"
+  h1 data-bind="text:name"
+  p data-bind="text:plan"
+  = partial "layouts/hpgauge"
 
 .panel.panel-default
   .panel-heading
     h3.panel-title スキル
   .panel-body
-    .list-group
-      a.list-group-item href="#"
-        span.glyphicon.glyphicon-fire style="color:red;"
-        | 炎のパンチ
-        span.glyphicon.glyphicon-chevron-right.pull-right
-      a.list-group-item href="#"
-        | ---
-        span.glyphicon.glyphicon-chevron-right.pull-right
+    .list-group data-bind="foreach:skills"
+      a.list-group-item
+        span data-bind="css:color"
+        span data-bind="text:name"
 
 .panel.panel-default
   .panel-heading
@@ -33,10 +28,12 @@ nav.navbar.navbar-default.navbar-fixed-bottom role="navigation"
   .container-fluid
     .row
       .col-xs-6
-        button.btn.btn-default.btn-lg.btn-block.navbar-btn type="button" 戻る
+        a.btn.btn-default.btn-lg.btn-block.navbar-btn href="javascript:history.back()" role="button" 戻る
       .col-xs-6
         button.btn.btn-primary.btn-lg.btn-block.navbar-btn type="button" パーティに入れる
 
 - content_for :post_script do
-    script src="js/vendor/Chart.min.js"
-    script src="js/scene/hero.js"
+  script src="js/vendor/knockout-3.0.0.js"
+  script src="js/vendor/Chart.min.js"
+  script src="js/rpg.js"
+  script src="js/scene/hero.js"

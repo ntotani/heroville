@@ -10,6 +10,8 @@ service =
       return hero
     getTeam: ->
       [@getHero('ハルヒロ'), null, null, null]
+    getSelected: ->
+      @getHero 'ハルヒロ'
 
   skill:
     getSkill: (id) -> new rpg.Skill
@@ -25,6 +27,12 @@ service =
     get: (id) ->
       (id:id, name:'トキワの森', desc:'薄暗い森。ピカチュウとか出てくる。', depth:3, preDepth:'エリア', postDepth:'')
     getSelected: -> service.dungeon.get 1
+    commit: ->
+      dungeon = @getSelected()
+      dungeon = new rpg.Dungeon(dungeon.id)
+      result = dungeon.solveAuto _.compact(service.hero.getTeam())
+      # store result
+      # store result id to selected
 
   battle:
     getResult: ->
