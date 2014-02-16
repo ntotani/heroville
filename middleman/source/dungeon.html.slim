@@ -3,42 +3,43 @@ title: dungeon
 ---
 
 .page-header
-  h1 トキワの森
-  p 薄暗い森。ピカチュウとか出てくる。
+  h1 data-bind="text:name"
+  p data-bind="text:desc"
 
 .panel.panel-default
   .panel-heading
     h3.panel-title パーティ
   .panel-body
-    .list-group
-      a.list-group-item href="#"
-        span.hero
-        | ハルヒロ
-        .progress.progress-striped.active
-          .progress-bar.progress-bar-success role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" style="width: 60%;"
-      a.list-group-item href="#"
-        | ---
-        span.glyphicon.glyphicon-chevron-right.pull-right
-      a.list-group-item href="#"
-        | ---
-        span.glyphicon.glyphicon-chevron-right.pull-right
-      a.list-group-item href="#"
-        | ---
-        span.glyphicon.glyphicon-chevron-right.pull-right
+    .list-group data-bind="template:{name:teamTpl, foreach:team}"
+
+script#hero type="text/html"
+  a.list-group-item href="hero.html"
+    span.pull-left data-bind="css:'hero-' + color"
+    span data-bind="text:name"
+    .progress.active data-bind="css:{'progress-striped':hp != maxHp}"
+      .progress-bar.progress-bar-success role="progressbar" aria-valuemin="0" aria-valuemax="100" data-bind="attr:{'aria-valuenow':hpRate},style:{width:hpRate + '%'}"
+        span data-bind="text:hp + '/' + maxHp"
+
+script#empty type="text/html"
+  a.list-group-item href="#"
+    | ---
+    span.glyphicon.glyphicon-chevron-right.pull-right
 
 .panel.panel-default
   .panel-heading
     h3.panel-title 目的地
   .panel-body
-    select.form-control
-      option 1
-      option 2
-      option 3
+    select.form-control data-bind="options: depth, optionsText: 'txt', optionsValue: 'value'"
 
-nav.navbar.navbar-default.navbar-fixed-bottom role="navigation"
+/!nav.navbar.navbar-default.navbar-fixed-bottom role="navigation"
   .container-fluid
-    .row
-      .col-xs-6
-        button.btn.btn-default.btn-lg.btn-block.navbar-btn type="button" 戻る
-      .col-xs-6
-        a.btn.btn-primary.btn-lg.btn-block.navbar-btn href="battle.html" role="button" 出発
+.row
+  .col-xs-6
+    button.btn.btn-default.btn-lg.btn-block.navbar-btn type="button" 戻る
+  .col-xs-6
+    a.btn.btn-primary.btn-lg.btn-block.navbar-btn href="battle.html" role="button" 出発
+
+- content_for :post_script do
+  script src="js/vendor/knockout-3.0.0.js"
+  script src="js/rpg.js"
+  script src="js/scene/dungeon.js"

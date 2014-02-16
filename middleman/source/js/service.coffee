@@ -8,6 +8,8 @@ service =
       hero.name = id
       e.name = "skill#{i}" for e, i in hero.skills
       return hero
+    getTeam: ->
+      [@getHero('ハルヒロ'), null, null, null]
 
   skill:
     getSkill: (id) -> new rpg.Skill
@@ -20,6 +22,9 @@ service =
         service.battle.getResult()
       ]
       depth:1
+    get: (id) ->
+      (id:id, name:'トキワの森', desc:'薄暗い森。ピカチュウとか出てくる。', depth:3, preDepth:'エリア', postDepth:'')
+    getSelected: -> service.dungeon.get 1
 
   battle:
     getResult: ->
