@@ -1,0 +1,56 @@
+---
+title: battle
+---
+
+#enchant-stage
+
+div data-bind="foreach:battles"
+  .list-group data-bind="template:{name:$parent.log2tpl, foreach:$data}"
+
+script#state-tpl type="text/html"
+  .list-group-item
+    table.table.table-condensed
+      caption data-bind="text:caption"
+      thead
+        tr
+          th 味方
+          th 敵
+      tbody data-bind="foreach:heros"
+        tr
+          td data-bind="if:red"
+            span data-bind="attr:{class:red.color}"
+            span data-bind="text:red.name"
+            span.pull-right data-bind="text:red.hp + '/' + red.maxHp"
+          td data-bind="if:blue"
+            span data-bind="attr:{class:blue.color}"
+            span data-bind="text:blue.name"
+            span.pull-right data-bind="text:blue.hp + '/' + blue.maxHp"
+
+script#action-tpl type="text/html"
+  .list-group-item
+    span data-bind="text:txt"
+
+nav.navbar.navbar-default.navbar-fixed-bottom role="navigation"
+  .container-fluid
+    .row
+      .col-xs-6
+        a#skip.btn.btn-default.btn-lg.btn-block.navbar-btn role="button"
+          span.glyphicon.glyphicon-forward
+      .col-xs-6
+        a#step.btn.btn-primary.btn-lg.btn-block.navbar-btn role="button"
+          span.glyphicon.glyphicon-play
+          span data-bind="visible:finish" マップへ
+
+- content_for :post_head
+  sass:
+    body
+      padding-top: 176px + 20px
+    .table
+      margin-bottom: 0
+
+- content_for :post_script do
+    script src="js/vendor/knockout-3.0.0.js"
+    script src="js/vendor/enchant.js"
+    script src="js/vendor/avatar.enchant.js"
+    script src="js/rpg.js"
+    script src="js/scene/battle.js"

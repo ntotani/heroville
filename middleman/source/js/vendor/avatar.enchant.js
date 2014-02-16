@@ -156,13 +156,13 @@ enchant.avatar.AvatarBG = enchant.Class.create(enchant.Group, {
 
         this.veryfarbg = new enchant.Sprite(320, 51);
         this.veryfarbg.y = 0;
-        this.veryfarbg.image = core.assets["avatarBg2.png"];
+        this.veryfarbg.image = core.assets["img/avatarBg2.png"];
         this.veryfarbg.frame = mode;
         this.addChild(this.veryfarbg);
         this.farbgs = [];
         for (i = 0; i < 3; i++) {
             var bg = new enchant.Sprite(320, 32);
-            bg.image = core.assets["avatarBg3.png"];
+            bg.image = core.assets["img/avatarBg3.png"];
             bg.frame = mode;
             bg.x = i * 320 - 320;
             bg.y = 20;
@@ -173,7 +173,7 @@ enchant.avatar.AvatarBG = enchant.Class.create(enchant.Group, {
         this.tiles = [];
         for (i = 0; i < 14; i++) {
             var tile = new enchant.Sprite(32, 128);
-            tile.image = core.assets["avatarBg1.png"];
+            tile.image = core.assets["img/avatarBg1.png"];
             tile.frame = mode;
             tile.x = i * 31 - 48;
             tile.y = 48;
@@ -208,6 +208,9 @@ enchant.avatar.Avatar = enchant.Class.create(enchant.avatar.AvatarCharacter, {
      */
     initialize: function(code) {
         enchant.avatar.AvatarCharacter.call(this, 64, 64);
+        if (enchant.avatar.Avatar.color2code[code.toLowerCase()]) {
+            code = enchant.avatar.Avatar.color2code[code.toLowerCase()];
+        }
         if (code) {
             this.setCode(code);
         } else {
@@ -235,30 +238,25 @@ enchant.avatar.Avatar = enchant.Class.create(enchant.avatar.AvatarCharacter, {
      * Reflesh avatar animation image
      */
     loadImage: function() {
-        var ___EnchantAvatarServerURL = "http://9leap.net/meruru/draw/draw.php";
-        this.opt = "gender=" + this.gender + "&job=0&hairstyle=" + this.hairstyle + "&haircolor=" + this.haircolor + "&weapon=" + this.weapon + "&armor=" + this.armor + "&headpiece=" + this.headpiece + "&invisible=0&x=0&y=0&w=4&h=4&dummy=.gif";
-        this.src = ___EnchantAvatarServerURL + "?" + this.opt;
-        (function(that) {
-            var core = enchant.Core.instance;
-            core.load(that.src, function() {
-                that.image = core.assets[that.src];
-            });
-        })(this);
+        var that = this;
+        var surface = enchant.Surface.load('img/' + this.getCode() + '.gif', function() {
+            that.image = surface;
+        });
     },
     /**
      * Get avatar code from actual object
      * @return {String} code;
      */
     getCode: function() {
-        return this.gender + ":" + this.hairstyle + ":" + this.haircolor + ":" +
-            this.weapon + ":" + this.armor + ":" + this.headpiece;
+        return this.gender + "_" + this.hairstyle + "_" + this.haircolor + "_" +
+            this.weapon + "_" + this.armor + "_" + this.headpiece;
     },
     /**
      * Set avatar code and reflesh avatar image.
      * @param {String} code
      */
     setCode: function(code) {
-        data = code.split(":");
+        data = code.split("_");
         this.gender = data[0];
         this.hairstyle = data[1];
         this.haircolor = data[2];
@@ -268,3 +266,13 @@ enchant.avatar.Avatar = enchant.Class.create(enchant.avatar.AvatarCharacter, {
         this.loadImage();
     }
 });
+
+enchant.avatar.Avatar.color2code = {
+    'sun': '2_1_0_2062_21230_22480',
+    'moon': '2_4_3_2038_21300_2232',
+    'fire': '1_2_1_2597_21270_0',
+    'water': '2_10_5_2503_21580_2206',
+    'tree': '2_6_2_2030_21900_27380',
+    'gold': '1_10_2_2086_21470_2231',
+    'earth': '1_5_3_2033_21230_27000',
+};
