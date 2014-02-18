@@ -11,12 +11,31 @@ HxOverrides.iter = function(a) {
 }
 var Lambda = function() { }
 Lambda.__name__ = true;
+Lambda.array = function(it) {
+	var a = new Array();
+	var $it0 = $iterator(it)();
+	while( $it0.hasNext() ) {
+		var i = $it0.next();
+		a.push(i);
+	}
+	return a;
+}
 Lambda.map = function(it,f) {
 	var l = new List();
 	var $it0 = $iterator(it)();
 	while( $it0.hasNext() ) {
 		var x = $it0.next();
 		l.add(f(x));
+	}
+	return l;
+}
+Lambda.mapi = function(it,f) {
+	var l = new List();
+	var i = 0;
+	var $it0 = $iterator(it)();
+	while( $it0.hasNext() ) {
+		var x = $it0.next();
+		l.add(f(i++,x));
 	}
 	return l;
 }
@@ -241,18 +260,30 @@ rpg.Color.GOLD.__enum__ = rpg.Color;
 rpg.Color.EARTH = ["EARTH",6];
 rpg.Color.EARTH.toString = $estr;
 rpg.Color.EARTH.__enum__ = rpg.Color;
-rpg.Dungeon = function() {
-	this.name = "";
-	this.depth = 1;
+rpg.Dungeon = function(depth,lotteryTable,boss) {
+	this.depth = depth;
+	this.lotteryTable = lotteryTable;
+	this.boss = boss;
 };
 rpg.Dungeon.__name__ = true;
 rpg.Dungeon.prototype = {
 	spawnEnemies: function() {
-		var zero = { attack : 0, block : 0, speed : 0, health : 0};
-		return [rpg.Hero.create("hoge",zero,zero)];
+		var rateSum = Lambda.fold(this.lotteryTable,function(e,p) {
+			return p + e.rate;
+		},0);
+		var pivot = rpg.Rand.next() % rateSum;
+		var _g = 0, _g1 = this.lotteryTable;
+		while(_g < _g1.length) {
+			var lot = _g1[_g];
+			++_g;
+			if(lot.rate > pivot) return Lambda.array(Lambda.mapi(lot.enemies,function(i,e) {
+				return new rpg.Hero("enemy" + i,e.color,e.plan,rpg.Hero.generateTalent(),e.effort,e.skills);
+			}));
+		}
+		throw "invalid table";
 	}
 	,solveAuto: function(heros) {
-		var result = { exp : { attack : 0, block : 0, speed : 0, health : 0}, battles : [], depth : 0};
+		var result = { battles : []};
 		var id2hero = new haxe.ds.StringMap();
 		var _g = 0;
 		while(_g < heros.length) {
@@ -278,6 +309,7 @@ rpg.Dungeon.prototype = {
 				if(id2hero.exists(id)) id2hero.get(id).setHp(e.getHp());
 			}
 			result.battles.push(engine.getResult());
+			if(!engine.isWin(0)) break;
 		}
 		return result;
 	}
@@ -299,41 +331,102 @@ rpg.MonkeyAI.prototype = {
 	callback: function(turn,finish) {
 	}
 	,getCommands: function() {
-		var friends = this.engine.getFriends(this.friendTeam);
-		var enemies = this.engine.getEnemies(this.friendTeam);
+		var friends = Lambda.filter(this.engine.getFriends(this.friendTeam),function(e) {
+			return e.alive();
+		});
+		var enemies = Lambda.array(Lambda.filter(this.engine.getEnemies(this.friendTeam),function(e) {
+			return e.alive();
+		}));
 		return Lambda.map(friends,function(friend) {
-			var target = Lambda.fold(enemies,function(e,p) {
-				return e.getHp() > 0?e.getId():p;
-			},0);
-			return { actor : friend.getId(), target : target, skill : 0};
+			return { actor : friend.getId(), target : enemies[rpg.Rand.next() % enemies.length].getId(), skill : rpg.Rand.next() % friend.getHero().getSkillNum()};
 		});
 	}
 	,__class__: rpg.MonkeyAI
 }
-rpg.Hero = function(id) {
+rpg.Hero = function(id,color,plan,talent,effort,skills) {
+	if(rpg.Hero.validateTalent(talent)) throw rpg.HeroError.INVALID_TALENT;
+	if(rpg.Hero.validateEffort(effort)) throw rpg.HeroError.INVALID_EFFORT;
 	this.id = id;
-	this.name = "";
-	this.color = rpg.Color.SUN;
-	this.plan = rpg.Plan.MONKEY;
-	this.talent = { attack : 0, block : 0, speed : 0, health : 0};
-	this.effort = { attack : 0, block : 0, speed : 0, health : 0};
-	this.hp = 100;
-	this.returnAt = new Date();
-	this.skills = [new rpg.Skill()];
+	this.color = color;
+	this.plan = plan;
+	this.talent = talent;
+	this.effort = effort;
+	this.hp = this.getParameter().health;
+	this.skills = skills;
 };
 rpg.Hero.__name__ = true;
-rpg.Hero.create = function(id,talent,effort) {
-	var hero = new rpg.Hero(id);
-	hero.talent = talent;
-	hero.effort = effort;
-	return hero;
+rpg.Hero.validateTalent = function(talent) {
+	return talent.attack < 1 || talent.attack > rpg.Hero.MAX_TALENT || talent.block < 1 || talent.block > rpg.Hero.MAX_TALENT || talent.speed < 1 || talent.speed > rpg.Hero.MAX_TALENT || talent.health < 1 || talent.health > rpg.Hero.MAX_TALENT;
 }
-rpg.Hero.calcParameter = function(talent,effort) {
-	return Math.max(1,talent + effort / 4) | 0;
+rpg.Hero.validateEffort = function(effort) {
+	return effort.attack < 0 || effort.attack > rpg.Hero.EFFORT_LIMIT || effort.block < 0 || effort.block > rpg.Hero.EFFORT_LIMIT || effort.speed < 0 || effort.speed > rpg.Hero.EFFORT_LIMIT || effort.health < 0 || effort.health > rpg.Hero.EFFORT_LIMIT || effort.attack + effort.block + effort.speed + effort.health > rpg.Hero.EFFORT_SUM_LIMIT;
+}
+rpg.Hero.calcParameter = function(talent,effort,level) {
+	return (60 + talent + effort / 4) * level / 10 | 0;
+}
+rpg.Hero.calcHealthParameter = function(talent,effort,level) {
+	return rpg.Hero.calcParameter(talent,effort,level) + level * 5;
+}
+rpg.Hero.calcLevel = function(effort) {
+	var sum = effort.attack + effort.block + effort.speed + effort.health;
+	return (Math.sqrt(sum) * 9 / 16 | 0) + 1;
+}
+rpg.Hero.generateTalent = function() {
+	return { attack : rpg.Rand.next() % rpg.Hero.MAX_TALENT + 1, block : rpg.Rand.next() % rpg.Hero.MAX_TALENT + 1, speed : rpg.Rand.next() % rpg.Hero.MAX_TALENT + 1, health : rpg.Rand.next() % rpg.Hero.MAX_TALENT + 1};
 }
 rpg.Hero.prototype = {
-	getParameter: function() {
-		return { attack : rpg.Hero.calcParameter(this.talent.attack,this.effort.attack), block : rpg.Hero.calcParameter(this.talent.block,this.effort.block), speed : rpg.Hero.calcParameter(this.talent.speed,this.effort.speed), health : rpg.Hero.calcParameter(this.talent.health,this.effort.health)};
+	calcExp: function() {
+		var exp = { attack : 0, block : 0, speed : 0, health : 0};
+		var val = this.getLevel();
+		var _g = this;
+		switch( (_g.color)[1] ) {
+		case 2:
+			break;
+		case 3:
+			break;
+		case 4:
+			exp.attack = val;
+			break;
+		case 6:
+			exp.block = val;
+			break;
+		case 1:
+			break;
+		case 5:
+			exp.speed = val;
+			break;
+		case 0:
+			exp.health = val;
+			break;
+		}
+		return exp;
+	}
+	,trimEffort: function(base,gain) {
+		var ret = Math.min(rpg.Hero.EFFORT_LIMIT - base,gain) | 0;
+		var sum = this.effort.attack + this.effort.block + this.effort.speed + this.effort.health;
+		return Math.min(rpg.Hero.EFFORT_SUM_LIMIT - sum,ret) | 0;
+	}
+	,applyExp: function(effort) {
+		this.effort.attack += this.trimEffort(this.effort.attack,effort.attack);
+		this.effort.block += this.trimEffort(this.effort.block,effort.block);
+		this.effort.speed += this.trimEffort(this.effort.speed,effort.speed);
+		this.effort.health += this.trimEffort(this.effort.health,effort.health);
+	}
+	,recoverAllHp: function() {
+		this.hp = this.getParameter().health;
+	}
+	,getLevel: function() {
+		return rpg.Hero.calcLevel(this.effort);
+	}
+	,getParameter: function() {
+		var level = this.getLevel();
+		return { attack : rpg.Hero.calcParameter(this.talent.attack,this.effort.attack,level), block : rpg.Hero.calcParameter(this.talent.block,this.effort.block,level), speed : rpg.Hero.calcParameter(this.talent.speed,this.effort.speed,level), health : rpg.Hero.calcHealthParameter(this.talent.health,this.effort.health,level)};
+	}
+	,getEffort: function() {
+		return this.effort;
+	}
+	,getSkillNum: function() {
+		return this.skills.length;
 	}
 	,getSkill: function(idx) {
 		return this.skills[idx];
@@ -349,34 +442,82 @@ rpg.Hero.prototype = {
 	}
 	,__class__: rpg.Hero
 }
+rpg.HeroError = { __ename__ : true, __constructs__ : ["INVALID_TALENT","INVALID_EFFORT"] }
+rpg.HeroError.INVALID_TALENT = ["INVALID_TALENT",0];
+rpg.HeroError.INVALID_TALENT.toString = $estr;
+rpg.HeroError.INVALID_TALENT.__enum__ = rpg.HeroError;
+rpg.HeroError.INVALID_EFFORT = ["INVALID_EFFORT",1];
+rpg.HeroError.INVALID_EFFORT.toString = $estr;
+rpg.HeroError.INVALID_EFFORT.__enum__ = rpg.HeroError;
 rpg.Plan = { __ename__ : true, __constructs__ : ["MONKEY"] }
 rpg.Plan.MONKEY = ["MONKEY",0];
 rpg.Plan.MONKEY.toString = $estr;
 rpg.Plan.MONKEY.__enum__ = rpg.Plan;
-rpg.Skill = function() {
-	this.id = 0;
-	this.name = "";
-	this.color = rpg.Color.SUN;
-	this.power = 100;
-	this.hitRate = 100;
-	this.target = rpg.Target.ENEMY;
-	this.effect = rpg.Effect.ATTACK;
-};
-rpg.Skill.__name__ = true;
-rpg.Skill.prototype = {
-	getEffect: function() {
-		return this.effect;
-	}
-	,__class__: rpg.Skill
+rpg._Rand = {}
+rpg._Rand.IRand = function() { }
+rpg._Rand.IRand.__name__ = true;
+rpg._Rand.IRand.prototype = {
+	__class__: rpg._Rand.IRand
 }
-rpg.Target = { __ename__ : true, __constructs__ : ["ENEMY"] }
-rpg.Target.ENEMY = ["ENEMY",0];
-rpg.Target.ENEMY.toString = $estr;
-rpg.Target.ENEMY.__enum__ = rpg.Target;
-rpg.Effect = { __ename__ : true, __constructs__ : ["ATTACK"] }
-rpg.Effect.ATTACK = ["ATTACK",0];
-rpg.Effect.ATTACK.toString = $estr;
-rpg.Effect.ATTACK.__enum__ = rpg.Effect;
+rpg._Rand.RandImpl = function() {
+};
+rpg._Rand.RandImpl.__name__ = true;
+rpg._Rand.RandImpl.__interfaces__ = [rpg._Rand.IRand];
+rpg._Rand.RandImpl.prototype = {
+	next: function() {
+		return Math.floor(Math.random() * 2147483647.0);
+	}
+	,__class__: rpg._Rand.RandImpl
+}
+rpg.Rand = function() { }
+rpg.Rand.__name__ = true;
+rpg.Rand.next = function() {
+	return rpg.Rand.gen.next();
+}
+rpg.Rand.startDebug = function(nums) {
+	rpg.Rand.gen = new rpg._Rand.RandDebug(nums);
+}
+rpg.Rand.endDebug = function() {
+	rpg.Rand.gen = new rpg._Rand.RandImpl();
+}
+rpg._Rand.RandDebug = function(nums) {
+	this.nums = nums;
+	this.currentIdx = 0;
+};
+rpg._Rand.RandDebug.__name__ = true;
+rpg._Rand.RandDebug.__interfaces__ = [rpg._Rand.IRand];
+rpg._Rand.RandDebug.prototype = {
+	next: function() {
+		var ret = this.nums[this.currentIdx];
+		this.currentIdx = (this.currentIdx + 1) % this.nums.length;
+		return ret;
+	}
+	,__class__: rpg._Rand.RandDebug
+}
+rpg.SkillTarget = { __ename__ : true, __constructs__ : ["ENEMY"] }
+rpg.SkillTarget.ENEMY = ["ENEMY",0];
+rpg.SkillTarget.ENEMY.toString = $estr;
+rpg.SkillTarget.ENEMY.__enum__ = rpg.SkillTarget;
+rpg.SkillType = { __ename__ : true, __constructs__ : ["ATTACK","BLOCK","ENHANCE","JAM","HEAL"] }
+rpg.SkillType.ATTACK = ["ATTACK",0];
+rpg.SkillType.ATTACK.toString = $estr;
+rpg.SkillType.ATTACK.__enum__ = rpg.SkillType;
+rpg.SkillType.BLOCK = ["BLOCK",1];
+rpg.SkillType.BLOCK.toString = $estr;
+rpg.SkillType.BLOCK.__enum__ = rpg.SkillType;
+rpg.SkillType.ENHANCE = ["ENHANCE",2];
+rpg.SkillType.ENHANCE.toString = $estr;
+rpg.SkillType.ENHANCE.__enum__ = rpg.SkillType;
+rpg.SkillType.JAM = ["JAM",3];
+rpg.SkillType.JAM.toString = $estr;
+rpg.SkillType.JAM.__enum__ = rpg.SkillType;
+rpg.SkillType.HEAL = ["HEAL",4];
+rpg.SkillType.HEAL.toString = $estr;
+rpg.SkillType.HEAL.__enum__ = rpg.SkillType;
+rpg.SkillEffect = { __ename__ : true, __constructs__ : ["ATTACK"] }
+rpg.SkillEffect.ATTACK = ["ATTACK",0];
+rpg.SkillEffect.ATTACK.toString = $estr;
+rpg.SkillEffect.ATTACK.__enum__ = rpg.SkillEffect;
 rpg.Util = function() { }
 rpg.Util.__name__ = true;
 rpg.Util.copy = function(v) {
@@ -433,6 +574,36 @@ rpg.Util.copy = function(v) {
 	}
 	return null;
 }
+rpg.battle.BattleHero = function(id,team,hero) {
+	this.id = id;
+	this.team = team;
+	this.hero = hero;
+	this.hp = hero.getHp();
+	this.correction = { attack : 0, block : 0, speed : 0, health : 0};
+};
+rpg.battle.BattleHero.__name__ = true;
+rpg.battle.BattleHero.prototype = {
+	alive: function() {
+		return this.hp > 0;
+	}
+	,damage: function(value) {
+		this.hp -= value;
+		this.hp = this.hp < 0?0:this.hp;
+	}
+	,getHp: function() {
+		return this.hp;
+	}
+	,getHero: function() {
+		return this.hero;
+	}
+	,getTeam: function() {
+		return this.team;
+	}
+	,getId: function() {
+		return this.id;
+	}
+	,__class__: rpg.battle.BattleHero
+}
 rpg.battle.Engine = function(teamRed,teamBlue) {
 	this.heros = new haxe.ds.IntMap();
 	this.requests = [];
@@ -442,7 +613,7 @@ rpg.battle.Engine = function(teamRed,teamBlue) {
 	while(_g < teamRed.length) {
 		var hero = teamRed[_g];
 		++_g;
-		this.heros.set(id,new rpg.battle.HeroState(id,team,hero));
+		this.heros.set(id,new rpg.battle.BattleHero(id,team,hero));
 		id++;
 	}
 	team++;
@@ -450,39 +621,55 @@ rpg.battle.Engine = function(teamRed,teamBlue) {
 	while(_g < teamBlue.length) {
 		var hero = teamBlue[_g];
 		++_g;
-		this.heros.set(id,new rpg.battle.HeroState(id,team,hero));
+		this.heros.set(id,new rpg.battle.BattleHero(id,team,hero));
 		id++;
 	}
-	this.result = { heros : rpg.Util.copy(this.heros), turns : []};
+	this.result = { teamRed : rpg.Util.copy(teamRed), teamBlue : rpg.Util.copy(teamBlue), turns : []};
 };
 rpg.battle.Engine.__name__ = true;
+rpg.battle.Engine.calcDamage = function(actor,target,skill) {
+	var attack = actor.getHero().getParameter().attack;
+	var block = target.getHero().getParameter().block;
+	return skill.power * actor.getHero().getLevel() / 10 * attack / block + 1 | 0;
+}
 rpg.battle.Engine.prototype = {
-	isFinish: function() {
-		var redHp = 0;
-		var blueHp = 0;
-		var $it0 = this.heros.iterator();
-		while( $it0.hasNext() ) {
-			var e = $it0.next();
-			if(e.getTeam() == 0) redHp += e.getHp(); else blueHp += e.getHp();
-		}
-		return redHp <= 0 || blueHp <= 0;
+	isWin: function(team) {
+		return Lambda.fold(this.heros,function(e,p) {
+			if(e.getTeam() == team) return p;
+			return p + e.getHp();
+		},0) <= 0;
 	}
-	,calcDamage: function(actor,target) {
-		var attack = actor.getHero().getParameter().attack;
-		var block = target.getHero().getParameter().block;
-		return Math.max(1,attack - block) | 0;
+	,isFinish: function() {
+		return this.isWin(0) || this.isWin(1);
+	}
+	,applyAction: function(act) {
+		var actor = this.heros.get(act.actor);
+		var target = this.heros.get(act.target);
+		var skill = actor.getHero().getSkill(act.skill);
+		switch( (skill.type)[1] ) {
+		case 0:
+			target.damage(act.effect);
+			break;
+		default:
+		}
+		var turn = this.result.turns[this.result.turns.length - 1];
+		turn.push(act);
+	}
+	,applyNewTurn: function() {
+		var turn = [];
+		this.result.turns.push(turn);
+		return turn;
 	}
 	,action: function(cmd) {
 		var actor = this.heros.get(cmd.actor);
 		var target = this.heros.get(cmd.target);
 		var skill = actor.getHero().getSkill(cmd.skill);
 		var result = { actor : cmd.actor, target : cmd.target, skill : cmd.skill, effect : 0};
-		var _g = skill.getEffect();
-		switch( (_g)[1] ) {
+		switch( (skill.type)[1] ) {
 		case 0:
-			result.effect = this.calcDamage(actor,target);
-			target.damage(result.effect);
+			result.effect = actor.alive() && target.alive() && actor.getTeam() != target.getTeam()?rpg.battle.Engine.calcDamage(actor,target,skill):0;
 			break;
+		default:
 		}
 		return result;
 	}
@@ -522,22 +709,22 @@ rpg.battle.Engine.prototype = {
 				}
 			}
 			var events = [];
-			var turn = [];
+			var turn = this.applyNewTurn();
 			var _g = 0, _g1 = this.solveOrder(this.requests);
 			while(_g < _g1.length) {
 				var id = _g1[_g];
 				++_g;
 				var event = this.action(commands.get(id));
-				turn.push(event);
+				this.applyAction(event);
 			}
-			this.result.turns.push(turn);
-			var _g = 0, _g1 = this.requests;
-			while(_g < _g1.length) {
-				var e = _g1[_g];
+			var requests = this.requests;
+			this.requests = [];
+			var _g = 0;
+			while(_g < requests.length) {
+				var e = requests[_g];
 				++_g;
 				e.callback(turn,this.isFinish());
 			}
-			this.requests = [];
 		}
 	}
 	,getResult: function() {
@@ -561,33 +748,6 @@ rpg.battle.Engine.prototype = {
 	}
 	,__class__: rpg.battle.Engine
 }
-rpg.battle.HeroState = function(id,team,hero) {
-	this.id = id;
-	this.team = team;
-	this.hero = hero;
-	this.hp = hero.getHp();
-	this.correction = { attack : 0, block : 0, speed : 0, health : 0};
-};
-rpg.battle.HeroState.__name__ = true;
-rpg.battle.HeroState.prototype = {
-	damage: function(value) {
-		this.hp -= value;
-		this.hp = this.hp < 0?0:this.hp;
-	}
-	,getHp: function() {
-		return this.hp;
-	}
-	,getHero: function() {
-		return this.hero;
-	}
-	,getTeam: function() {
-		return this.team;
-	}
-	,getId: function() {
-		return this.id;
-	}
-	,__class__: rpg.battle.HeroState
-}
 function $iterator(o) { if( o instanceof Array ) return function() { return HxOverrides.iter(o); }; return typeof(o.iterator) == 'function' ? $bind(o,o.iterator) : o.iterator; };
 var $_, $fid = 0;
 function $bind(o,m) { if( m == null ) return null; if( m.__id__ == null ) m.__id__ = $fid++; var f; if( o.hx__closures__ == null ) o.hx__closures__ = {}; else f = o.hx__closures__[m.__id__]; if( f == null ) { f = function(){ return f.method.apply(f.scope, arguments); }; f.scope = o; f.method = m; o.hx__closures__[m.__id__] = f; } return f; };
@@ -605,8 +765,6 @@ String.prototype.__class__ = String;
 String.__name__ = true;
 Array.prototype.__class__ = Array;
 Array.__name__ = true;
-Date.prototype.__class__ = Date;
-Date.__name__ = ["Date"];
 var Int = { __name__ : ["Int"]};
 var Dynamic = { __name__ : ["Dynamic"]};
 var Float = Number;
@@ -615,5 +773,9 @@ var Bool = Boolean;
 Bool.__ename__ = ["Bool"];
 var Class = { __name__ : ["Class"]};
 var Enum = { };
-rpg.Hero.MAX_TALENT = 15;
+rpg.Hero.MAX_TALENT = 16;
+rpg.Hero.EFFORT_LIMIT = 128;
+rpg.Hero.EFFORT_SUM_LIMIT = 256;
+rpg._Rand.RandImpl.MPM = 2147483647.0;
+rpg.Rand.gen = new rpg._Rand.RandImpl();
 window.rpg=rpg;})();

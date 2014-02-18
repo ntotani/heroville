@@ -1,19 +1,18 @@
 enchant()
 $ ->
   result = service.dungeon.getResult()
-  userid = service.user.getId()
 
   hs2vm = (e) ->
-    color: e.hero.color[0].toLowerCase()
-    name: e.hero.name
+    color: e.color[0].toLowerCase()
+    name: e.name
     hp: e.hp
-    maxHp: e.hero.getParameter().health
+    maxHp: e.getParameter().health
   battleState = (idx) ->
     battle = result.battles[idx]
-    friends = _.values(battle.heros).filter (e) -> e.team is userid
-    enemies = _.values(battle.heros).filter (e) -> e.team isnt userid
+    friends = battle.teamRed
+    enemies = battle.teamBlue
     (
-      caption: "#{enemies.map((e) -> e.hero.name).join(', ')}が現れた！"
+      caption: "#{enemies.map((e) -> e.name).join(', ')}が現れた！"
       heros: [0...Math.max(friends.length, enemies.length)].map (i) ->
         red: if friends[i] then hs2vm friends[i] else null
         blue: if enemies[i] then hs2vm enemies[i] else null
@@ -27,32 +26,37 @@ $ ->
     finish:ko.observable false
   ko.applyBindings vm
 
-  logs = _.flatten result.battles[0].turns
   currentBtl = 0
   currentAct = 0
+  engine = new rpg.battle.Engine result.battles[0].teamRed, result.battles[0].teamBlue
+  engine.applyNewTurn()
+  logs = _.flatten result.battles[0].turns
   docElem = $ document.documentElement
-  showNextLog = ->
+  parseResult = ->
     if currentAct >= logs.length
       currentAct = 0
       currentBtl++
       if currentBtl >= result.battles.length
         vm.finish true
-        $('#step').unbind 'click', showNextLog
+        $('#step').unbind 'click', parseResult
         $('#step').click -> location.href = 'map.html'
       else
         vm.battles.push(ko.observableArray([battleState currentBtl]))
+        engine = new rpg.battle.Engine result.battles[currentBtl].teamRed, result.battles[currentBtl].teamBlue
+        engine.applyNewTurn()
         logs = _.flatten result.battles[currentBtl].turns
-        moveAvatar(hero for id, hero of result.battles[currentBtl].heros when hero.team isnt userid)
+        moveAvatar(hero for id, hero of engine.heros.h when hero.team isnt 0)
     else
       log = logs[currentAct]
-      actor = result.battles[currentBtl].heros[log.actor]
-      target = result.battles[currentBtl].heros[log.target]
+      engine.applyAction log
+      actor = engine.getHero log.actor
+      target = engine.getHero log.target
       skill = actor.hero.skills[log.skill]
       actAvatar actor, target, skill
       vm.battles()[currentBtl].push (txt:"#{actor.hero.name}の#{skill.name}！#{target.hero.name}に#{log.effect}ダメージ！", tpl:'action-tpl')
       currentAct++
     docElem.animate (scrollTop:document.body.scrollHeight), 'fast'
-  $('#step').click showNextLog
+  $('#step').click parseResult
 
   avatars = {}
   avatarBg = null
@@ -108,9 +112,9 @@ $ ->
     avatarBg.onenterframe = -> @scroll ++@scrollPos if @scrollPos < @scrollTarget
     friendIdx = 0
     enemyIdx = 0
-    for id, e of result.battles[0].heros
+    for id, e of engine.heros.h
       avatar = new Avatar e.hero.color[0]
-      if e.team is userid
+      if e.team is 0
         dx = leftX friendIdx
         avatar.y = heroY friendIdx
         friendIdx++

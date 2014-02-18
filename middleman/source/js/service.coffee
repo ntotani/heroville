@@ -3,52 +3,69 @@ service =
     getId: -> 'player'
 
   hero:
-    getHero: (id) ->
-      hero = new rpg.Hero id
+    get: (id) ->
+      one = {attack:1, block:1, speed:1, health:1}
+      zero = {attack:0, block:0, speed:0, health:0}
+      skill = service.skill.get(1)
+      hero = new rpg.Hero id, rpg.Color.SUN, rpg.Plan.MONKEY, one, zero, [skill]
       hero.name = id
-      e.name = "skill#{i}" for e, i in hero.skills
       return hero
     getTeam: ->
-      [@getHero('ハルヒロ'), null, null, null]
+      [@get('ハルヒロ'), null, null, null]
     getSelected: ->
-      @getHero 'ハルヒロ'
+      @get 'ハルヒロ'
 
   skill:
-    getSkill: (id) -> new rpg.Skill
+    get: (id) ->
+      id:id
+      color:rpg.Color.SUN
+      type:rpg.SkillType.ATTACK
+      effect:rpg.SkillEffect.ATTACK
+      target:rpg.SkillTarget.ENEMY
+      power:40
+      hitRate:100
+      name:'sun attack'
 
   dungeon:
+    get: (id) ->
+      zero = {attack:0, block:0, speed:0, health:0}
+      enemy = {color:rpg.Color.SUN, plan:rpg.Plan.MONKEY, effort:zero, skills:service.skill.get(1)}
+      enemies = [enemy]
+      d = new rpg.Dungeon 3, [{enemies:enemies, rate:100}], enemies
+      d.name = 'トキワの森'
+      d.desc = '薄暗い森。ピカチュウとか出てくる。'
+      d.preDepth = 'エリア'
+      d.postDepth = ''
+      return d
     getResult: ->
-      exp:0
       battles:[
         service.battle.getResult()
         service.battle.getResult()
+        service.battle.getResult()
       ]
-      depth:1
-    get: (id) ->
-      (id:id, name:'トキワの森', desc:'薄暗い森。ピカチュウとか出てくる。', depth:3, preDepth:'エリア', postDepth:'')
-    getSelected: -> service.dungeon.get 1
+    getSelected: -> @get 1
     commit: ->
-      dungeon = @getSelected()
-      dungeon = new rpg.Dungeon(dungeon.id)
-      result = dungeon.solveAuto _.compact(service.hero.getTeam())
+      result = @getSelected().solveAuto _.compact(service.hero.getTeam())
       # store result
       # store result id to selected
 
   battle:
     getResult: ->
-      friend = new rpg.battle.HeroState 0, 'player', service.hero.getHero('friend')
-      friend.hero.color = rpg.Color.FIRE
-      friend1 = new rpg.battle.HeroState 1, 'player', service.hero.getHero('friend2')
-      friend2 = new rpg.battle.HeroState 2, 'player', service.hero.getHero('friend3')
-      friend3 = new rpg.battle.HeroState 3, 'player', service.hero.getHero('friend4')
-      enemy = new rpg.battle.HeroState 4, 'enemy', service.hero.getHero('enemy')
-      enemy2 = new rpg.battle.HeroState 5, 'enemy', service.hero.getHero('enemy2')
       result =
-        heros: (0: friend, 1:friend1, 2:friend2, 3:friend3, 4:enemy, 5:enemy2)
+        teamRed:[
+          service.hero.get 'friend1'
+          service.hero.get 'friend2'
+          service.hero.get 'friend3'
+          service.hero.get 'friend4'
+        ]
+        teamBlue:[
+          service.hero.get 'enemy1'
+          service.hero.get 'enemy2'
+        ]
         turns: [
           [
-            (actor:0, target:4, skill:0, effect:30)
-            (actor:5, target:3, skill:0, effect:30)
+            (actor:0, target:4, skill:0, effect:5)
+            (actor:5, target:3, skill:0, effect:5)
           ]
         ]
 
