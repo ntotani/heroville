@@ -104,6 +104,9 @@ Reflect.fields = function(o) {
 	}
 	return a;
 }
+Reflect.isFunction = function(f) {
+	return typeof(f) == "function" && !(f.__name__ || f.__ename__);
+}
 Reflect.isObject = function(v) {
 	if(v == null) return false;
 	var t = typeof(v);
@@ -143,6 +146,16 @@ Type.createInstance = function(cl,args) {
 Type.createEmptyInstance = function(cl) {
 	function empty() {}; empty.prototype = cl.prototype;
 	return new empty();
+}
+Type.createEnum = function(e,constr,params) {
+	var f = Reflect.field(e,constr);
+	if(f == null) throw "No such constructor " + constr;
+	if(Reflect.isFunction(f)) {
+		if(params == null) throw "Constructor " + constr + " need parameters";
+		return f.apply(e,params);
+	}
+	if(params != null && params.length != 0) throw "Constructor " + constr + " does not need parameters";
+	return f;
 }
 var haxe = {}
 haxe.ds = {}
@@ -260,14 +273,94 @@ rpg.Color.GOLD.__enum__ = rpg.Color;
 rpg.Color.EARTH = ["EARTH",6];
 rpg.Color.EARTH.toString = $estr;
 rpg.Color.EARTH.__enum__ = rpg.Color;
-rpg.Dungeon = function(depth,lotteryTable,boss) {
+rpg.Colors = function() { }
+rpg.Colors.__name__ = true;
+rpg.Colors.rate = function(from,to) {
+	return (function($this) {
+		var $r;
+		switch( (from)[1] ) {
+		case 2:
+			$r = (function($this) {
+				var $r;
+				switch( (to)[1] ) {
+				case 4:
+				case 5:
+					$r = 2.0;
+					break;
+				case 2:
+				case 3:
+				case 6:
+					$r = 0.5;
+					break;
+				default:
+					$r = 1.0;
+				}
+				return $r;
+			}($this));
+			break;
+		case 3:
+			$r = (function($this) {
+				var $r;
+				switch( (to)[1] ) {
+				case 2:
+				case 1:
+					$r = 2.0;
+					break;
+				case 3:
+				case 4:
+				case 6:
+					$r = 0.5;
+					break;
+				default:
+					$r = 1.0;
+				}
+				return $r;
+			}($this));
+			break;
+		case 4:
+			$r = (function($this) {
+				var $r;
+				switch( (to)[1] ) {
+				case 3:
+				case 0:
+					$r = 2.0;
+					break;
+				case 4:
+				case 2:
+				case 6:
+					$r = 0.5;
+					break;
+				default:
+					$r = 1.0;
+				}
+				return $r;
+			}($this));
+			break;
+		default:
+			$r = 1.0;
+		}
+		return $r;
+	}(this));
+}
+rpg.Colors.valueOf = function(str) {
+	return Type.createEnum(rpg.Color,str);
+}
+rpg.Dungeon = function(depth,lotteryTable,nameTable,boss) {
 	this.depth = depth;
 	this.lotteryTable = lotteryTable;
+	this.nameTable = nameTable;
 	this.boss = boss;
 };
 rpg.Dungeon.__name__ = true;
 rpg.Dungeon.prototype = {
-	spawnEnemies: function() {
+	toHeros: function(enemies) {
+		var _g = this;
+		return Lambda.array(Lambda.mapi(enemies,function(i,e) {
+			var name = e.name == "_RAND_"?_g.nameTable[rpg.Rand.next() % _g.nameTable.length]:e.name;
+			return new rpg.Hero("enemy" + i,name,e.color,e.plan,rpg.Hero.generateTalent(),e.effort,e.skills);
+		}));
+	}
+	,spawnEnemies: function() {
 		var rateSum = Lambda.fold(this.lotteryTable,function(e,p) {
 			return p + e.rate;
 		},0);
@@ -276,9 +369,7 @@ rpg.Dungeon.prototype = {
 		while(_g < _g1.length) {
 			var lot = _g1[_g];
 			++_g;
-			if(lot.rate > pivot) return Lambda.array(Lambda.mapi(lot.enemies,function(i,e) {
-				return new rpg.Hero("enemy" + i,e.color,e.plan,rpg.Hero.generateTalent(),e.effort,e.skills);
-			}));
+			if(lot.rate > pivot) return lot.enemies;
 		}
 		throw "invalid table";
 	}
@@ -294,7 +385,7 @@ rpg.Dungeon.prototype = {
 		var _g1 = 0, _g = this.depth;
 		while(_g1 < _g) {
 			var i = _g1++;
-			var enemies = this.spawnEnemies();
+			var enemies = this.toHeros(i + 1 == this.depth?this.boss:this.spawnEnemies());
 			var engine = new rpg.battle.Engine(heros,enemies);
 			var friendAgent = new rpg.MonkeyAI(engine,0);
 			var enemyAgent = new rpg.MonkeyAI(engine,1);
@@ -343,10 +434,11 @@ rpg.MonkeyAI.prototype = {
 	}
 	,__class__: rpg.MonkeyAI
 }
-rpg.Hero = function(id,color,plan,talent,effort,skills) {
+rpg.Hero = function(id,name,color,plan,talent,effort,skills) {
 	if(rpg.Hero.validateTalent(talent)) throw rpg.HeroError.INVALID_TALENT;
 	if(rpg.Hero.validateEffort(effort)) throw rpg.HeroError.INVALID_EFFORT;
 	this.id = id;
+	this.name = name;
 	this.color = color;
 	this.plan = plan;
 	this.talent = talent;
@@ -422,6 +514,9 @@ rpg.Hero.prototype = {
 		var level = this.getLevel();
 		return { attack : rpg.Hero.calcParameter(this.talent.attack,this.effort.attack,level), block : rpg.Hero.calcParameter(this.talent.block,this.effort.block,level), speed : rpg.Hero.calcParameter(this.talent.speed,this.effort.speed,level), health : rpg.Hero.calcHealthParameter(this.talent.health,this.effort.health,level)};
 	}
+	,getColor: function() {
+		return this.color;
+	}
 	,getEffort: function() {
 		return this.effort;
 	}
@@ -449,10 +544,17 @@ rpg.HeroError.INVALID_TALENT.__enum__ = rpg.HeroError;
 rpg.HeroError.INVALID_EFFORT = ["INVALID_EFFORT",1];
 rpg.HeroError.INVALID_EFFORT.toString = $estr;
 rpg.HeroError.INVALID_EFFORT.__enum__ = rpg.HeroError;
+rpg.Parameters = function() { }
+rpg.Parameters.__name__ = true;
 rpg.Plan = { __ename__ : true, __constructs__ : ["MONKEY"] }
 rpg.Plan.MONKEY = ["MONKEY",0];
 rpg.Plan.MONKEY.toString = $estr;
 rpg.Plan.MONKEY.__enum__ = rpg.Plan;
+rpg.Plans = function() { }
+rpg.Plans.__name__ = true;
+rpg.Plans.valueOf = function(str) {
+	return Type.createEnum(rpg.Plan,str);
+}
 rpg._Rand = {}
 rpg._Rand.IRand = function() { }
 rpg._Rand.IRand.__name__ = true;
@@ -518,6 +620,17 @@ rpg.SkillEffect = { __ename__ : true, __constructs__ : ["ATTACK"] }
 rpg.SkillEffect.ATTACK = ["ATTACK",0];
 rpg.SkillEffect.ATTACK.toString = $estr;
 rpg.SkillEffect.ATTACK.__enum__ = rpg.SkillEffect;
+rpg.Skills = function() { }
+rpg.Skills.__name__ = true;
+rpg.Skills.targetValueOf = function(str) {
+	return Type.createEnum(rpg.SkillTarget,str);
+}
+rpg.Skills.typeValueOf = function(str) {
+	return Type.createEnum(rpg.SkillType,str);
+}
+rpg.Skills.effectValueOf = function(str) {
+	return Type.createEnum(rpg.SkillEffect,str);
+}
 rpg.Util = function() { }
 rpg.Util.__name__ = true;
 rpg.Util.copy = function(v) {
@@ -630,7 +743,11 @@ rpg.battle.Engine.__name__ = true;
 rpg.battle.Engine.calcDamage = function(actor,target,skill) {
 	var attack = actor.getHero().getParameter().attack;
 	var block = target.getHero().getParameter().block;
-	return skill.power * actor.getHero().getLevel() / 10 * attack / block + 1 | 0;
+	var damage = skill.power * attack / block;
+	damage *= actor.getHero().getLevel() / 10;
+	damage *= (85 + rpg.Rand.next() % 16) / 100;
+	damage *= rpg.Colors.rate(skill.color,target.getHero().getColor());
+	return (damage | 0) + 1;
 }
 rpg.battle.Engine.prototype = {
 	isWin: function(team) {
@@ -776,6 +893,8 @@ var Enum = { };
 rpg.Hero.MAX_TALENT = 16;
 rpg.Hero.EFFORT_LIMIT = 128;
 rpg.Hero.EFFORT_SUM_LIMIT = 256;
+rpg.Parameters.ZERO = { attack : 0, block : 0, speed : 0, health : 0};
+rpg.Parameters.ONE = { attack : 1, block : 1, speed : 1, health : 1};
 rpg._Rand.RandImpl.MPM = 2147483647.0;
 rpg.Rand.gen = new rpg._Rand.RandImpl();
 window.rpg=rpg;})();

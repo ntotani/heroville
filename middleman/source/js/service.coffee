@@ -4,11 +4,10 @@ service =
 
   hero:
     get: (id) ->
-      one = {attack:1, block:1, speed:1, health:1}
-      zero = {attack:0, block:0, speed:0, health:0}
+      one = {attack:7, block:7, speed:7, health:7}
+      zero = rpg.Parameters.ZERO
       skill = service.skill.get(1)
-      hero = new rpg.Hero id, rpg.Color.SUN, rpg.Plan.MONKEY, one, zero, [skill]
-      hero.name = id
+      hero = new rpg.Hero id, id, rpg.Color.FIRE, rpg.Plan.MONKEY, one, zero, [skill]
       return hero
     getTeam: ->
       [@get('ハルヒロ'), null, null, null]
@@ -18,7 +17,7 @@ service =
   skill:
     get: (id) ->
       id:id
-      color:rpg.Color.SUN
+      color:rpg.Color.FIRE
       type:rpg.SkillType.ATTACK
       effect:rpg.SkillEffect.ATTACK
       target:rpg.SkillTarget.ENEMY
@@ -27,23 +26,31 @@ service =
       name:'sun attack'
 
   dungeon:
+    master:{}
     get: (id) ->
-      zero = {attack:0, block:0, speed:0, health:0}
-      enemy = {color:rpg.Color.SUN, plan:rpg.Plan.MONKEY, effort:zero, skills:service.skill.get(1)}
-      enemies = [enemy]
-      d = new rpg.Dungeon 3, [{enemies:enemies, rate:100}], enemies
-      d.name = 'トキワの森'
-      d.desc = '薄暗い森。ピカチュウとか出てくる。'
-      d.preDepth = 'エリア'
-      d.postDepth = ''
+      parseEnemy = (e) ->
+        {name: e.name, color:eval("rpg.Color.#{e.color}"), plan:eval("rpg.Plan.#{e.plan}"), effort:e.effort, skills:e.skills.map((e)->service.skill.get e)}
+      master = @master[id]
+      lotteryTable = master.lotteryTable.map (e) ->
+        enemies:e.enemies.map parseEnemy
+        rate:e.rate
+      boss = master.boss.map parseEnemy
+      d = new rpg.Dungeon master.depth, lotteryTable, master.nameTable, boss
+      d.name = master.name
+      d.desc = master.desc
+      d.preDepth = master.preDepth
+      d.postDepth = master.postDepth
       return d
     getResult: ->
+      ###
       battles:[
         service.battle.getResult()
         service.battle.getResult()
         service.battle.getResult()
       ]
-    getSelected: -> @get 1
+      ###
+      @getSelected().solveAuto _.compact(service.hero.getTeam())
+    getSelected: -> @get 2
     commit: ->
       result = @getSelected().solveAuto _.compact(service.hero.getTeam())
       # store result

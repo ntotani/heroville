@@ -33,10 +33,10 @@ $ ->
   logs = _.flatten result.battles[0].turns
   docElem = $ document.documentElement
   parseResult = ->
-    if currentAct >= logs.length
+    if engine.isFinish()
       currentAct = 0
       currentBtl++
-      if currentBtl >= result.battles.length
+      if currentBtl >= result.battles.length or engine.isWin(1)
         vm.finish true
         $('#step').unbind 'click', parseResult
         $('#step').click -> location.href = 'map.html'
