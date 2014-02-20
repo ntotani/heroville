@@ -14,6 +14,10 @@ title: map
       padding: 0
 
 - content_for :post_script
-    script src="js/vendor/enchant.js"
-    script src="js/master/area.js"
-    script src="js/scene/map.js"
+  script src="js/vendor/knockout-3.0.0.js"
+  script src="js/vendor/enchant.js"
+  script src="js/master/area.js"
+  script src="js/scene/map.js"
+  coffee:
+    $ ->
+      ko.applyBindings {scene:'map'}

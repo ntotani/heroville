@@ -2,24 +2,19 @@
 title: heros
 ---
 
-div.page-header
-  h1 勇者
+.page-header
+  h1 社員
 
-div.list-group
-  a.list-group-item href="#"
-    span.hero
-    | ハルヒロ
+.list-group data-bind="foreach:heros"
+  a.list-group-item data-bind="click:$parent.onHeroClick"
+    span data-bind="css:'hero-' + color"
+    span data-bind="text:name" ハルヒロ
     span.glyphicon.glyphicon-chevron-right.pull-right
-    div.progress.progress-striped.active
-      div.progress-bar.progress-bar-success role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" style="width: 60%;"
-  a.list-group-item href="#"
-    | ---
-    span.glyphicon.glyphicon-chevron-right.pull-right
-  a.list-group-item href="#"
-    | ---
-    span.glyphicon.glyphicon-chevron-right.pull-right
-  a.list-group-item href="#"
-    | ---
-    span.glyphicon.glyphicon-chevron-right.pull-right
+    = partial "layouts/hpgauge"
 
 = partial "layouts/footer"
+
+- content_for :post_script
+  script src="js/vendor/knockout-3.0.0.js"
+  script src="js/rpg.js"
+  script src="js/scene/heros.js"

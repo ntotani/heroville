@@ -11,8 +11,9 @@ service =
       return hero
     getTeam: ->
       [@get('ハルヒロ'), null, null, null]
-    getSelected: ->
-      @get 'ハルヒロ'
+    setSelected: (id) -> localStorage['selectedHero'] = id
+    getSelected: -> @get localStorage['selectedHero']
+    getAll: -> [@get 'ハルヒロ']
 
   skill:
     get: (id) ->

@@ -2,35 +2,36 @@ $ ->
   hero = service.hero.getSelected()
   vm =
     name: hero.name
+    lv: hero.getLevel()
     color: hero.color[0].toLowerCase()
-    plan: '攻撃的な性格'
+    #plan: '攻撃的な性格'
     hp: hero.hp
     maxHp: hero.getParameter().health
     hpRate: 100 * hero.hp / hero.getParameter().health
     skills:hero.skills.map (e) -> (name:e.name, color:e.color[0].toLowerCase())
+    footer:'back'
   ko.applyBindings vm
 
-radarChartData = {
-    labels : ['攻撃', '防御', '速度', '体力'],
+  radarChartData =
+    labels : ['攻撃', '防御', '速度', '体力']
     datasets : [
-        {
-            fillColor : "rgba(220, 220, 220, 0.5)",
-            strokeColor : "rgba(220, 220, 220, 1)",
-            pointColor : "rgba(220, 220, 220, 1)",
-            pointStrokeColor : "#fff",
-            data : [1, 59, 90, 81]
-        },
-        {
-            fillColor : "rgba(151, 187, 205, 0.5)",
-            strokeColor : "rgba(151, 187, 205, 1)",
-            pointColor : "rgba(151, 187, 205, 1)",
-            pointStrokeColor : "#fff",
-            data : [28, 48, 40, 19]
-        }
+      {
+          fillColor : "rgba(220, 220, 220, 0.5)",
+          strokeColor : "rgba(220, 220, 220, 1)",
+          pointColor : "rgba(220, 220, 220, 1)",
+          pointStrokeColor : "#fff",
+          data : (hero.talent[e] for e in ['attack', 'block', 'speed', 'health'])
+      },
+      {
+          fillColor : "rgba(151, 187, 205, 0.5)",
+          strokeColor : "rgba(151, 187, 205, 1)",
+          pointColor : "rgba(151, 187, 205, 1)",
+          pointStrokeColor : "#fff",
+          data : (hero.effort[e] / 4 for e in ['attack', 'block', 'speed', 'health'])
+      }
     ]
-}
-# オプション
-options = {
+  # オプション
+  options =
     # 値のラインが棒グラフの値の上にかぶさるようにするか
     scaleOverlay : false,
     # 値の開始値などを自分で設定するか
@@ -111,5 +112,4 @@ options = {
     # animation: false の時にも実行されるようです
     # e.g. onAnimationComplete : function() {alert('complete');}
     onAnimationComplete : null
-}
-chart = new Chart(document.getElementById("chart").getContext("2d")).Radar(radarChartData, options)
+  new Chart(document.getElementById("chart").getContext("2d")).Radar(radarChartData, options)
