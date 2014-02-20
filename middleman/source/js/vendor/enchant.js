@@ -2999,7 +2999,7 @@ enchant.Map = enchant.Class.create(enchant.Entity, {
         x = x / tileWidth | 0;
         y = y / tileHeight | 0;
         if (this.collisionData != null) {
-            return this.collisionData[y] && !!this.collisionData[y][x];
+            return this.collisionData[y] && this.collisionData[y][x];
         } else {
             for (var i = 0, len = this._data.length; i < len; i++) {
                 var data = this._data[i];

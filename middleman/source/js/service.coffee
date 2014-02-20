@@ -50,7 +50,8 @@ service =
       ]
       ###
       @getSelected().solveAuto _.compact(service.hero.getTeam())
-    getSelected: -> @get 2
+    setSelected: (e) -> localStorage['selectedDungeon'] = e
+    getSelected: -> @get localStorage['selectedDungeon']
     commit: ->
       result = @getSelected().solveAuto _.compact(service.hero.getTeam())
       # store result
@@ -75,5 +76,8 @@ service =
             (actor:5, target:3, skill:0, effect:5)
           ]
         ]
+
+  area:
+    master:{}
 
 window.service = service

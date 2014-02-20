@@ -2,10 +2,18 @@
 title: map
 ---
 
-div#enchant-stage.center-block
+#enchant-stage
 
 = partial "layouts/footer"
 
-- content_for :post_script do
+- content_for :post_head
+  sass:
+    body
+      padding-bottom: 0
+    .container
+      padding: 0
+
+- content_for :post_script
     script src="js/vendor/enchant.js"
+    script src="js/master/area.js"
     script src="js/scene/map.js"
