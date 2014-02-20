@@ -24,6 +24,7 @@ $ ->
     ])
     log2tpl: (log) -> log.tpl
     finish:ko.observable false
+    onStepClick: (->)
   ko.applyBindings vm
 
   currentBtl = 0
@@ -37,9 +38,18 @@ $ ->
       currentAct = 0
       currentBtl++
       if currentBtl >= result.battles.length or engine.isWin(1)
-        vm.finish true
-        $('#step').unbind 'click', parseResult
-        $('#step').click -> location.href = 'map.html'
+        messages = if engine.isWin(1)
+          ['クエスト失敗...']
+        else
+          ['クエスト成功！！', '経験値を手に入れた！'].concat(result.battles[0].teamRed.filter((e) ->
+            e.getLevel() > service.hero.get(e.id).getLevel()
+          ).map((e) ->
+              "#{e.name}はレベル#{e.getLevel()}になった！")
+          )
+        lastLog = ko.observableArray()
+        vm.battles.push lastLog
+        vm.onStepClick = showResult lastLog, messages
+        vm.onStepClick()
       else
         vm.battles.push(ko.observableArray([battleState currentBtl]))
         engine = new rpg.battle.Engine result.battles[currentBtl].teamRed, result.battles[currentBtl].teamBlue
@@ -56,7 +66,13 @@ $ ->
       vm.battles()[currentBtl].push (txt:"#{actor.hero.name}の#{skill.name}！#{target.hero.name}に#{log.effect}ダメージ！", tpl:'action-tpl')
       currentAct++
     docElem.animate (scrollTop:document.body.scrollHeight), 'fast'
-  $('#step').click parseResult
+  showResult = (battleVm, messages) ->
+    ->
+      battleVm.push {txt:messages.shift(), tpl:'action-tpl'}
+      if messages.length < 1
+        vm.onStepClick = (-> location.href = 'map.html')
+        vm.finish true
+  vm.onStepClick = parseResult
 
   avatars = {}
   avatarBg = null
