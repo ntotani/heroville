@@ -1,7 +1,7 @@
 $ ->
   heros = service.hero.getAll()
   vm =
-    heros: heros.map (e) ->
+    heros: _.values(heros).map (e) ->
       id: e.id
       name:e.name
       color:e.color[0].toLowerCase()

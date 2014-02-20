@@ -3,17 +3,57 @@ service =
     getId: -> 'player'
 
   hero:
-    get: (id) ->
-      one = {attack:7, block:7, speed:7, health:7}
-      zero = rpg.Parameters.ZERO
-      skill = service.skill.get(1)
-      hero = new rpg.Hero id, id, rpg.Color.FIRE, rpg.Plan.MONKEY, one, zero, [skill]
-      return hero
+    get: (id) -> @getAll()[id]
     getTeam: ->
-      [@get('ハルヒロ'), null, null, null]
+      heros = @getAll()
+      storedTeam = if localStorage['team']
+        JSON.parse localStorage['team']
+      else
+        team = _.keys heros
+        localStorage['team'] = JSON.stringify team
+        team
+      [0...4].map (i) -> if storedTeam[i] then heros[storedTeam[i]] else null
     setSelected: (id) -> localStorage['selectedHero'] = id
     getSelected: -> @get localStorage['selectedHero']
-    getAll: -> [@get 'ハルヒロ']
+    getAll: ->
+      if localStorage['allHeros']
+        storedHeros = JSON.parse localStorage['allHeros']
+      else
+        id = "#{Math.random()}"
+        talent = {attack:7, block:7, speed:16, health:7}
+        effort = rpg.Parameters.ZERO
+        skill = service.skill.get 1
+        storedHeros = {}
+        storedHeros[id] = @toStored new rpg.Hero(id, 'ハルヒロ', rpg.Color.FIRE, rpg.Plan.MONKEY, talent, effort, [service.skill.get(1)])
+        storedHeros[id].returnAt = Date.now()
+        localStorage['allHeros'] = JSON.stringify storedHeros
+      heros = {}
+      heros[id] = @fromStored e for id, e of storedHeros
+      return heros
+
+    updateHero: (param) ->
+      now = Date.now()
+      heros = @getAll()
+      for id, e of param
+        heros[id].setHp e.hp
+        heros[id].applyExp e.exp
+        heros[id].returnAt = now
+      storedHeros = {}
+      storedHeros[id] = @toStored e for id, e of heros
+      localStorage['allHeros'] = JSON.stringify storedHeros
+
+     toStored: (hero) ->
+       _.defaults({
+         color  : hero.color[0]
+         plan   : hero.plan[0]
+         skills : hero.skills.map((e)->e.id)
+       }, hero)
+
+     fromStored: (e) ->
+       hero = new rpg.Hero e.id, e.name, rpg.Colors.valueOf(e.color), rpg.Plans.valueOf(e.plan), e.talent, e.effort, e.skills.map((skill)->service.skill.get(skill))
+       hero.setHp e.hp
+       hero.returnAt = e.returnAt
+       return hero
 
   skill:
     get: (id) ->
@@ -43,20 +83,43 @@ service =
       d.postDepth = master.postDepth
       return d
     getResult: ->
-      ###
-      battles:[
-        service.battle.getResult()
-        service.battle.getResult()
-        service.battle.getResult()
-      ]
-      ###
-      @getSelected().solveAuto _.compact(service.hero.getTeam())
+      result = JSON.parse localStorage['lastDungeonResult']
+      @convert result, service.hero.fromStored
     setSelected: (e) -> localStorage['selectedDungeon'] = e
     getSelected: -> @get localStorage['selectedDungeon']
     commit: ->
-      result = @getSelected().solveAuto _.compact(service.hero.getTeam())
+      team = _.compact service.hero.getTeam()
+      result = @getSelected().solveAuto team
+      exp = rpg.Parameters.ZERO
+      for battle in result.battles
+        engine = new rpg.battle.Engine battle.teamRed, battle.teamBlue
+        for turn in battle.turns
+          engine.applyNewTurn()
+          for action in turn
+            engine.applyAction action
+        if engine.isWin 0
+          for enemy in battle.teamBlue
+            enemyExp = enemy.calcExp()
+            exp[e] += enemyExp[e] for e in _.keys(exp)
+      param = team.reduce((p, e) ->
+        p[e.id] =
+          hp:e.hp
+          exp:if e.hp > 0 then exp else rpg.Parameters.ZERO
+        return p
+      , {})
+      console.log param
+      console.log result
+      service.hero.updateHero param
+      result = @convert result, service.hero.toStored
+      localStorage['lastDungeonResult'] = JSON.stringify result
       # store result
       # store result id to selected
+
+    convert: (result, heroMap) ->
+      battles: result.battles.map (battle) ->
+        teamRed: battle.teamRed.map heroMap
+        teamBlue: battle.teamBlue.map heroMap
+        turns: battle.turns
 
   battle:
     getResult: ->
