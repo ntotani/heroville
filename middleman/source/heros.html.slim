@@ -7,7 +7,7 @@ title: heros
 
 .list-group data-bind="foreach:heros"
   a.list-group-item data-bind="click:$parent.onHeroClick"
-    span data-bind="css:'hero-' + color"
+    span data-bind="css:iconClasses()"
     span data-bind="text:name" ハルヒロ
     span.glyphicon.glyphicon-chevron-right.pull-right
     = partial "layouts/hpgauge"

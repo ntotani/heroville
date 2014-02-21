@@ -1,16 +1,24 @@
 $ ->
   hero = service.hero.getSelected()
+  now = Date.now()
   vm =
     name: hero.name
     lv: hero.getLevel()
     color: hero.color[0].toLowerCase()
+    iconClasses: -> "hero-#{hero.color[0].toLowerCase()}#{if @hp() < 1 then ' hero-dead' else ''}"
     #plan: '攻撃的な性格'
-    hp: hero.hp
+    hp: ko.observable service.hero.calcCurrentHp(hero, now)
     maxHp: hero.getParameter().health
-    hpRate: 100 * hero.hp / hero.getParameter().health
+    hpRate: -> 100 * @hp() / hero.getParameter().health
     skills:hero.skills.map (e) -> (name:e.name, color:e.color[0].toLowerCase())
     footer:'back'
   ko.applyBindings vm
+
+  setInterval ->
+    now = Date.now()
+    if vm.hp() < vm.maxHp
+      vm.hp service.hero.calcCurrentHp(hero, now)
+  , 1000
 
   radarChartData =
     labels : ['攻撃', '防御', '速度', '体力']

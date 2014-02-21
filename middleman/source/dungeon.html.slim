@@ -14,7 +14,7 @@ title: dungeon
 
 script#hero type="text/html"
   a.list-group-item
-    span.pull-left data-bind="css:'hero-' + color"
+    span.pull-left data-bind="css:iconClasses()"
     span data-bind="text:name"
     = partial "layouts/hpgauge"
 
@@ -37,7 +37,12 @@ script#empty type="text/html"
   .col-xs-6
     button#commit.btn.btn-primary.btn-lg.btn-block.navbar-btn type="button" 出発
 
-- content_for :post_script do
+- content_for :post_head
+  sass:
+    body
+      padding-bottom: 0
+
+- content_for :post_script
   script src="js/vendor/knockout-3.0.0.js"
   script src="js/rpg.js"
   script src="js/master/dungeon.js"

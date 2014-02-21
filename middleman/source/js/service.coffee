@@ -3,7 +3,11 @@ service =
     getId: -> 'player'
 
   hero:
+    MSEC_PER_RECOVER: 60000
     get: (id) -> @getAll()[id]
+    setSelected: (id) -> localStorage['selectedHero'] = id
+    getSelected: -> @get localStorage['selectedHero']
+
     getTeam: ->
       heros = @getAll()
       storedTeam = if localStorage['team']
@@ -13,8 +17,7 @@ service =
         localStorage['team'] = JSON.stringify team
         team
       [0...4].map (i) -> if storedTeam[i] then heros[storedTeam[i]] else null
-    setSelected: (id) -> localStorage['selectedHero'] = id
-    getSelected: -> @get localStorage['selectedHero']
+
     getAll: ->
       if localStorage['allHeros']
         storedHeros = JSON.parse localStorage['allHeros']
@@ -28,11 +31,10 @@ service =
         storedHeros[id].returnAt = Date.now()
         localStorage['allHeros'] = JSON.stringify storedHeros
       heros = {}
-      heros[id] = @fromStored e for id, e of storedHeros
+      heros[id] = @fromStored(e) for id, e of storedHeros
       return heros
 
-    updateHero: (param) ->
-      now = Date.now()
+    updateHero: (param, now) ->
       heros = @getAll()
       for id, e of param
         heros[id].setHp e.hp
@@ -54,6 +56,10 @@ service =
        hero.setHp e.hp
        hero.returnAt = e.returnAt
        return hero
+
+     calcCurrentHp: (hero, now) ->
+       hp = (hero.hp + (now - hero.returnAt) / @MSEC_PER_RECOVER) | 0
+       return Math.min(hp, hero.getParameter().health)
 
   skill:
     get: (id) ->
@@ -88,7 +94,9 @@ service =
     setSelected: (e) -> localStorage['selectedDungeon'] = e
     getSelected: -> @get localStorage['selectedDungeon']
     commit: ->
+      now = Date.now()
       team = _.compact service.hero.getTeam()
+      hero.hp = service.hero.calcCurrentHp hero, now for hero in team
       result = @getSelected().solveAuto team
       exp = rpg.Parameters.ZERO
       for battle in result.battles
@@ -107,9 +115,7 @@ service =
           exp:if e.hp > 0 then exp else rpg.Parameters.ZERO
         return p
       , {})
-      console.log param
-      console.log result
-      service.hero.updateHero param
+      service.hero.updateHero param, now
       result = @convert result, service.hero.toStored
       localStorage['lastDungeonResult'] = JSON.stringify result
       # store result
