@@ -27,7 +27,7 @@ service =
         effort = rpg.Parameters.ZERO
         skill = service.skill.get 1
         storedHeros = {}
-        storedHeros[id] = @toStored new rpg.Hero(id, 'ハルヒロ', rpg.Color.FIRE, rpg.Plan.MONKEY, talent, effort, [service.skill.get(1)])
+        storedHeros[id] = @toStored new rpg.Hero(id, 'ノージョ', rpg.Color.FIRE, rpg.Plan.MONKEY, talent, effort, [service.skill.get(1)])
         storedHeros[id].returnAt = Date.now()
         localStorage['allHeros'] = JSON.stringify storedHeros
       heros = {}
@@ -64,13 +64,13 @@ service =
   skill:
     get: (id) ->
       id:id
-      color:rpg.Color.FIRE
+      color: if id is 1 then rpg.Color.FIRE else rpg.Color.TREE
       type:rpg.SkillType.ATTACK
       effect:rpg.SkillEffect.ATTACK
       target:rpg.SkillTarget.ENEMY
       power:40
       hitRate:100
-      name:'sun attack'
+      name:"#{if id is 1 then '火' else '木'}攻撃"
 
   dungeon:
     master:{}

@@ -1,32 +1,51 @@
 dungeons =
   1:
-    name:'トキワの森'
-    desc:'薄暗い森。ピカチュウとかいる。'
+    name:'仕事のなる木'
+    desc:'すくすくと育っていく仕事'
     depth:1
     preDepth:'エリア'
     postDepth:''
     lotteryTable:[]
-    nameTable: []
+    nameTable: ['ドーリョ', 'ブーカ', 'ジョーシ']
     boss:[
-      {name: '前職の上司', color:'TREE', plan:'MONKEY', effort:{attack:0, block:0, speed:0, health:0}, skills:[1]}
+      {name: '_RAND_', color:'TREE', plan:'MONKEY', effort:{attack:0, block:0, speed:0, health:0}, skills:[2]}
     ]
   2:
-    name:'トキワの森'
-    desc:'薄暗い森。ピカチュウとかいる。'
+    name:'仕事のなる木々'
+    desc:'段々ヤバい気がしてくる'
     depth:2
     preDepth:'エリア'
     postDepth:''
     lotteryTable:[
       {
         enemies:[
-          {name: '_RAND_', color:'TREE', plan:'MONKEY', effort:{attack:0, block:0, speed:0, health:0}, skills:[1]}
+          {name: '_RAND_', color:'TREE', plan:'MONKEY', effort:{attack:0, block:0, speed:0, health:0}, skills:[2]}
         ]
         rate:100
       }
     ]
-    nameTable: ['キャタピー', 'ビードル', 'ピカチュウ']
+    nameTable: ['ドーリョ', 'ブーカ', 'ジョーシ']
     boss:[
-      {name: 'boss', color:'TREE', plan:'MONKEY', effort:{attack:0, block:0, speed:0, health:0}, skills:[1]}
+      {name: '_RAND_', color:'TREE', plan:'MONKEY', effort:{attack:0, block:0, speed:0, health:0}, skills:[2]}
+    ]
+  3:
+    name:'無職の大樹'
+    desc:'もう取り返しがつかない'
+    depth:3
+    preDepth:'エリア'
+    postDepth:''
+    lotteryTable:[
+      {
+        enemies:[
+          {name: '_RAND_', color:'TREE', plan:'MONKEY', effort:{attack:0, block:0, speed:0, health:0}, skills:[2]}
+        ]
+        rate:100
+      }
+    ]
+    nameTable: ['ドーリョ', 'ブーカ', 'ジョーシ']
+    boss:[
+      {name: '前のボス', color:'TREE', plan:'MONKEY', effort:{attack:0, block:0, speed:0, health:0}, skills:[2]}
+      {name: '_RAND_', color:'TREE', plan:'MONKEY', effort:{attack:0, block:0, speed:0, health:0}, skills:[2]}
     ]
 
 service.dungeon.master = dungeons
