@@ -180,6 +180,9 @@ haxe.ds.IntMap.prototype = {
 		}
 		return HxOverrides.iter(a);
 	}
+	,exists: function(key) {
+		return this.h.hasOwnProperty(key);
+	}
 	,get: function(key) {
 		return this.h[key];
 	}
@@ -831,8 +834,10 @@ rpg.battle.Engine.prototype = {
 			while(_g < _g1.length) {
 				var id = _g1[_g];
 				++_g;
-				var event = this.action(commands.get(id));
-				this.applyAction(event);
+				if(commands.exists(id)) {
+					var event = this.action(commands.get(id));
+					this.applyAction(event);
+				}
 			}
 			var requests = this.requests;
 			this.requests = [];

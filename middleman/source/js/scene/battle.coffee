@@ -58,13 +58,16 @@ $ ->
         moveAvatar(hero for id, hero of engine.heros.h when hero.team isnt 0)
     else
       log = logs[currentAct]
+      currentAct++
       engine.applyAction log
       actor = engine.getHero log.actor
       target = engine.getHero log.target
       skill = actor.hero.skills[log.skill]
-      actAvatar actor, target, skill
-      vm.battles()[currentBtl].push (txt:"#{actor.hero.name}の#{skill.name}！#{target.hero.name}に#{log.effect}ダメージ！", tpl:'action-tpl')
-      currentAct++
+      if not actor.alive()
+        parseResult()
+      else
+        actAvatar actor, target, skill
+        vm.battles()[currentBtl].push (txt:"#{actor.hero.name}の#{skill.name}！#{target.hero.name}に#{log.effect}ダメージ！", tpl:'action-tpl')
     docElem.animate (scrollTop:document.body.scrollHeight), 'fast'
   showResult = (battleVm, messages) ->
     ->
