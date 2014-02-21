@@ -1,2 +1,15 @@
+.DS_Store
+
 middleman/bower_components
 middleman/build
+platforms/android/CordovaLib
+platforms/android/bin
+platforms/android/cordova
+platforms/android/gen
+platforms/android/platform_www
+platforms/android/assets/www
+platforms/ios/CordovaLib
+platforms/ios/build
+platforms/ios/cordova
+platforms/ios/platform_www
+platforms/ios/www
