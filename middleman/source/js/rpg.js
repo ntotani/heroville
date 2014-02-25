@@ -9,6 +9,14 @@ HxOverrides.iter = function(a) {
 		return this.arr[this.cur++];
 	}};
 }
+var IntIterator = function(min,max) {
+	this.min = min;
+	this.max = max;
+};
+IntIterator.__name__ = true;
+IntIterator.prototype = {
+	__class__: IntIterator
+}
 var Lambda = function() { }
 Lambda.__name__ = true;
 Lambda.array = function(it) {
@@ -112,6 +120,11 @@ Reflect.isObject = function(v) {
 	var t = typeof(v);
 	return t == "string" || t == "object" && v.__enum__ == null || t == "function" && (v.__name__ || v.__ename__) != null;
 }
+var Std = function() { }
+Std.__name__ = true;
+Std.string = function(s) {
+	return js.Boot.__string_rec(s,"");
+}
 var Type = function() { }
 Type.__name__ = true;
 Type.getClass = function(o) {
@@ -197,7 +210,22 @@ haxe.ds.StringMap = function() {
 haxe.ds.StringMap.__name__ = true;
 haxe.ds.StringMap.__interfaces__ = [IMap];
 haxe.ds.StringMap.prototype = {
-	exists: function(key) {
+	iterator: function() {
+		return { ref : this.h, it : this.keys(), hasNext : function() {
+			return this.it.hasNext();
+		}, next : function() {
+			var i = this.it.next();
+			return this.ref["$" + i];
+		}};
+	}
+	,keys: function() {
+		var a = [];
+		for( var key in this.h ) {
+		if(this.h.hasOwnProperty(key)) a.push(key.substr(1));
+		}
+		return HxOverrides.iter(a);
+	}
+	,exists: function(key) {
 		return this.h.hasOwnProperty("$" + key);
 	}
 	,get: function(key) {
@@ -211,6 +239,72 @@ haxe.ds.StringMap.prototype = {
 var js = {}
 js.Boot = function() { }
 js.Boot.__name__ = true;
+js.Boot.__string_rec = function(o,s) {
+	if(o == null) return "null";
+	if(s.length >= 5) return "<...>";
+	var t = typeof(o);
+	if(t == "function" && (o.__name__ || o.__ename__)) t = "object";
+	switch(t) {
+	case "object":
+		if(o instanceof Array) {
+			if(o.__enum__) {
+				if(o.length == 2) return o[0];
+				var str = o[0] + "(";
+				s += "\t";
+				var _g1 = 2, _g = o.length;
+				while(_g1 < _g) {
+					var i = _g1++;
+					if(i != 2) str += "," + js.Boot.__string_rec(o[i],s); else str += js.Boot.__string_rec(o[i],s);
+				}
+				return str + ")";
+			}
+			var l = o.length;
+			var i;
+			var str = "[";
+			s += "\t";
+			var _g = 0;
+			while(_g < l) {
+				var i1 = _g++;
+				str += (i1 > 0?",":"") + js.Boot.__string_rec(o[i1],s);
+			}
+			str += "]";
+			return str;
+		}
+		var tostr;
+		try {
+			tostr = o.toString;
+		} catch( e ) {
+			return "???";
+		}
+		if(tostr != null && tostr != Object.toString) {
+			var s2 = o.toString();
+			if(s2 != "[object Object]") return s2;
+		}
+		var k = null;
+		var str = "{\n";
+		s += "\t";
+		var hasp = o.hasOwnProperty != null;
+		for( var k in o ) { ;
+		if(hasp && !o.hasOwnProperty(k)) {
+			continue;
+		}
+		if(k == "prototype" || k == "__class__" || k == "__super__" || k == "__interfaces__" || k == "__properties__") {
+			continue;
+		}
+		if(str.length != 2) str += ", \n";
+		str += s + k + " : " + js.Boot.__string_rec(o[k],s);
+		}
+		s = s.substring(1);
+		str += "\n" + s + "}";
+		return str;
+	case "function":
+		return "<function>";
+	case "string":
+		return o;
+	default:
+		return String(o);
+	}
+}
 js.Boot.__interfLoop = function(cc,cl) {
 	if(cc == null) return false;
 	if(cc == cl) return true;
@@ -348,8 +442,14 @@ rpg.Colors.rate = function(from,to) {
 rpg.Colors.valueOf = function(str) {
 	return Type.createEnum(rpg.Color,str);
 }
-rpg.Dungeon = function(depth,lotteryTable,nameTable,boss) {
+rpg.Dungeon = function(id,area,name,desc,depth,preDepth,postDepth,lotteryTable,nameTable,boss) {
+	this.id = id;
+	this.area = area;
+	this.name = name;
+	this.desc = desc;
 	this.depth = depth;
+	this.preDepth = preDepth;
+	this.postDepth = postDepth;
 	this.lotteryTable = lotteryTable;
 	this.nameTable = nameTable;
 	this.boss = boss;
@@ -360,7 +460,7 @@ rpg.Dungeon.prototype = {
 		var _g = this;
 		return Lambda.array(Lambda.mapi(enemies,function(i,e) {
 			var name = e.name == "_RAND_"?_g.nameTable[rpg.Rand.next() % _g.nameTable.length]:e.name;
-			return new rpg.Hero("enemy" + i,name,e.color,e.plan,rpg.Hero.generateTalent(),e.effort,e.skills);
+			return new rpg.Hero("enemy" + i,name,e.color,e.plan,rpg.Hero.generateTalent(),e.effort,e.skills,0);
 		}));
 	}
 	,spawnEnemies: function() {
@@ -376,7 +476,7 @@ rpg.Dungeon.prototype = {
 		}
 		throw "invalid table";
 	}
-	,solveAuto: function(heros) {
+	,solveAuto: function(heros,targetDepth,onBattle) {
 		var result = { battles : []};
 		var id2hero = new haxe.ds.StringMap();
 		var _g = 0;
@@ -402,10 +502,20 @@ rpg.Dungeon.prototype = {
 				var id = e.getHero().getId();
 				if(id2hero.exists(id)) id2hero.get(id).setHp(e.getHp());
 			}
+			if(onBattle != null) onBattle(engine);
 			result.battles.push(engine.getResult());
-			if(!engine.isWin(0)) break;
+			if(!engine.isWin(0) || result.battles.length >= targetDepth) break;
 		}
 		return result;
+	}
+	,getDepth: function() {
+		return this.depth;
+	}
+	,getArea: function() {
+		return this.area;
+	}
+	,getId: function() {
+		return this.id;
 	}
 	,__class__: rpg.Dungeon
 }
@@ -437,7 +547,7 @@ rpg.MonkeyAI.prototype = {
 	}
 	,__class__: rpg.MonkeyAI
 }
-rpg.Hero = function(id,name,color,plan,talent,effort,skills) {
+rpg.Hero = function(id,name,color,plan,talent,effort,skills,returnAt) {
 	if(rpg.Hero.validateTalent(talent)) throw rpg.HeroError.INVALID_TALENT;
 	if(rpg.Hero.validateEffort(effort)) throw rpg.HeroError.INVALID_EFFORT;
 	this.id = id;
@@ -448,6 +558,7 @@ rpg.Hero = function(id,name,color,plan,talent,effort,skills) {
 	this.effort = effort;
 	this.hp = this.getParameter().health;
 	this.skills = skills;
+	this.returnAt = returnAt;
 };
 rpg.Hero.__name__ = true;
 rpg.Hero.validateTalent = function(talent) {
@@ -517,11 +628,23 @@ rpg.Hero.prototype = {
 		var level = this.getLevel();
 		return { attack : rpg.Hero.calcParameter(this.talent.attack,this.effort.attack,level), block : rpg.Hero.calcParameter(this.talent.block,this.effort.block,level), speed : rpg.Hero.calcParameter(this.talent.speed,this.effort.speed,level), health : rpg.Hero.calcHealthParameter(this.talent.health,this.effort.health,level)};
 	}
+	,setReturnAt: function(returnAt) {
+		this.returnAt = returnAt;
+	}
+	,getReturnAt: function() {
+		return this.returnAt;
+	}
+	,getPlan: function() {
+		return this.plan;
+	}
 	,getColor: function() {
 		return this.color;
 	}
 	,getEffort: function() {
 		return this.effort;
+	}
+	,getTalent: function() {
+		return this.talent;
 	}
 	,getSkillNum: function() {
 		return this.skills.length;
@@ -529,11 +652,17 @@ rpg.Hero.prototype = {
 	,getSkill: function(idx) {
 		return this.skills[idx];
 	}
+	,getSkills: function() {
+		return this.skills;
+	}
 	,setHp: function(hp) {
 		this.hp = hp;
 	}
 	,getHp: function() {
 		return this.hp;
+	}
+	,getName: function() {
+		return this.name;
 	}
 	,getId: function() {
 		return this.id;
@@ -549,6 +678,9 @@ rpg.HeroError.INVALID_EFFORT.toString = $estr;
 rpg.HeroError.INVALID_EFFORT.__enum__ = rpg.HeroError;
 rpg.Parameters = function() { }
 rpg.Parameters.__name__ = true;
+rpg.Parameters.sum = function(a,b) {
+	return { attack : a.attack + b.attack, block : a.block + b.block, speed : a.speed + b.speed, health : a.health + b.health};
+}
 rpg.Plan = { __ename__ : true, __constructs__ : ["MONKEY"] }
 rpg.Plan.MONKEY = ["MONKEY",0];
 rpg.Plan.MONKEY.toString = $estr;
@@ -803,6 +935,7 @@ rpg.battle.Engine.prototype = {
 		allHeros.sort(function(a,b) {
 			var aSpeed = a.getHero().getParameter().speed;
 			var bSpeed = b.getHero().getParameter().speed;
+			if(aSpeed == bSpeed) return rpg.Rand.next() % 2 == 0?1:-1;
 			return bSpeed - aSpeed;
 		});
 		var order = [];
@@ -870,6 +1003,185 @@ rpg.battle.Engine.prototype = {
 	}
 	,__class__: rpg.battle.Engine
 }
+rpg.service = {}
+rpg.service.DungeonService = function() { }
+rpg.service.DungeonService.__name__ = true;
+rpg.service.DungeonService.get = function(id) {
+	var dungeon = rpg.service.DungeonService.master.get(id);
+	return new rpg.Dungeon(dungeon.id,dungeon.area,dungeon.name,dungeon.desc,dungeon.depth,dungeon.preDepth,dungeon.postDepth,Lambda.array(Lambda.map(dungeon.lotteryTable,function(e) {
+		return { enemies : Lambda.array(Lambda.map(e.enemies,rpg.service.DungeonService.fromStored)), rate : e.rate};
+	})),dungeon.nameTable,Lambda.array(Lambda.map(dungeon.boss,rpg.service.DungeonService.fromStored)));
+}
+rpg.service.DungeonService.set = function(id,dungeon) {
+	rpg.service.DungeonService.master.set(id,dungeon);
+}
+rpg.service.DungeonService.commit = function(storage,now,dungeon,depth) {
+	var progress = storage.getProgress();
+	if(progress < dungeon.getId()) throw rpg.service.DungeonError.INVALID_PROGRESS;
+	var team = rpg.service.HeroService.getTeam(storage);
+	var _g = 0;
+	while(_g < team.length) {
+		var hero = team[_g];
+		++_g;
+		var hp = rpg.service.HeroService.calcCurrentHp(hero,now);
+		if(hp < 1) throw rpg.service.DungeonError.INVALID_TEAM;
+		hero.setHp(hp);
+	}
+	var exp = rpg.Parameters.ZERO;
+	var clearDepth = 0;
+	var result = dungeon.solveAuto(team,depth,function(engine) {
+		if(!engine.isWin(0)) return;
+		clearDepth++;
+		var battleResult = engine.getResult();
+		var _g = 0, _g1 = battleResult.teamBlue;
+		while(_g < _g1.length) {
+			var enemy = _g1[_g];
+			++_g;
+			exp = rpg.Parameters.sum(exp,enemy.calcExp());
+		}
+	});
+	var storedResult = { battles : Lambda.array(Lambda.map(result.battles,function(e) {
+		return { teamRed : Lambda.array(Lambda.map(e.teamRed,rpg.service.HeroService.toStored)), teamBlue : Lambda.array(Lambda.map(e.teamBlue,rpg.service.HeroService.toStored)), turns : e.turns};
+	}))};
+	storage.setDungeonResult(now,storedResult);
+	if(clearDepth >= Math.min(depth,dungeon.getDepth())) {
+		var _g = 0;
+		while(_g < team.length) {
+			var hero = team[_g];
+			++_g;
+			if(hero.getHp() > 0) hero.applyExp(exp);
+		}
+		if(clearDepth >= dungeon.getDepth()) {
+			if(dungeon.getId() >= progress) {
+				storage.setProgress(dungeon.getId() + 1);
+				if(rpg.service.DungeonService.isAreaGoal(dungeon)) {
+					var bossTeam = result.battles[result.battles.length - 1].teamBlue;
+					var boss = bossTeam[0];
+					boss.recoverAllHp();
+					team.push(boss);
+				}
+			} else {
+			}
+		}
+	}
+	var _g = 0;
+	while(_g < team.length) {
+		var hero = team[_g];
+		++_g;
+		hero.setReturnAt(now);
+	}
+	rpg.service.HeroService.update(storage,team);
+}
+rpg.service.DungeonService.getLatestResult = function(storage) {
+	var storedResult = storage.getLatestDungeonResult();
+	return { battles : Lambda.array(Lambda.map(storedResult.battles,function(e) {
+		return { teamRed : Lambda.array(Lambda.map(e.teamRed,rpg.service.HeroService.fromStored)), teamBlue : Lambda.array(Lambda.map(e.teamBlue,rpg.service.HeroService.fromStored)), turns : e.turns};
+	}))};
+}
+rpg.service.DungeonService.fromStored = function(stored) {
+	return { name : stored.name, color : rpg.Colors.valueOf(stored.color), plan : rpg.Plans.valueOf(stored.plan), effort : stored.effort, skills : Lambda.array(Lambda.map(stored.skills,function(e) {
+		return rpg.service.SkillService.get(e);
+	}))};
+}
+rpg.service.DungeonService.isAreaGoal = function(dungeon) {
+	var $it0 = rpg.service.DungeonService.master.iterator();
+	while( $it0.hasNext() ) {
+		var e = $it0.next();
+		if(e.area == dungeon.getArea() && e.id > dungeon.getId()) return false;
+	}
+	return true;
+}
+rpg.service.DungeonError = { __ename__ : true, __constructs__ : ["INVALID_PROGRESS","INVALID_TEAM"] }
+rpg.service.DungeonError.INVALID_PROGRESS = ["INVALID_PROGRESS",0];
+rpg.service.DungeonError.INVALID_PROGRESS.toString = $estr;
+rpg.service.DungeonError.INVALID_PROGRESS.__enum__ = rpg.service.DungeonError;
+rpg.service.DungeonError.INVALID_TEAM = ["INVALID_TEAM",1];
+rpg.service.DungeonError.INVALID_TEAM.toString = $estr;
+rpg.service.DungeonError.INVALID_TEAM.__enum__ = rpg.service.DungeonError;
+rpg.service.HeroService = function() { }
+rpg.service.HeroService.__name__ = true;
+rpg.service.HeroService.createInit = function() {
+	var id = rpg.service.HeroService.generateId();
+	var talent = { attack : 7, block : 7, speed : 16, health : 7};
+	var effort = rpg.Parameters.ZERO;
+	var skill = rpg.service.SkillService.get(1);
+	return new rpg.Hero(id,"ハルヒロ",rpg.Color.FIRE,rpg.Plan.MONKEY,talent,effort,[skill],0);
+}
+rpg.service.HeroService.getAll = function(storage) {
+	var storedHeros = storage.getHeros();
+	if(storedHeros.length == 0) {
+		var hero = rpg.service.HeroService.createInit();
+		storedHeros = [rpg.service.HeroService.toStored(hero)];
+		storage.setHeros(storedHeros);
+	}
+	var heros = new haxe.ds.StringMap();
+	var _g = 0;
+	while(_g < storedHeros.length) {
+		var stored = storedHeros[_g];
+		++_g;
+		heros.set(stored.id,rpg.service.HeroService.fromStored(stored));
+	}
+	return heros;
+}
+rpg.service.HeroService.getTeam = function(storage) {
+	var heros = rpg.service.HeroService.getAll(storage);
+	var team = storage.getTeam();
+	if(team.length < 1) team = Lambda.array(Lambda.map(heros,function(e) {
+		return e.getId();
+	}));
+	return Lambda.array(Lambda.mapi([new IntIterator(0,rpg.service.HeroService.HERO_PER_TEAM)],function(i,e) {
+		if(team.length <= i) return null;
+		return heros.get(team[i]);
+	}));
+}
+rpg.service.HeroService.update = function(storage,heros) {
+	var heroMap = new haxe.ds.StringMap();
+	var _g = 0, _g1 = storage.getHeros();
+	while(_g < _g1.length) {
+		var hero = _g1[_g];
+		++_g;
+		heroMap.set(hero.id,hero);
+	}
+	var _g = 0;
+	while(_g < heros.length) {
+		var hero = heros[_g];
+		++_g;
+		heroMap.set(hero.getId(),rpg.service.HeroService.toStored(hero));
+	}
+	storage.setHeros(Lambda.array(heroMap));
+}
+rpg.service.HeroService.toStored = function(hero) {
+	return { id : hero.getId(), name : hero.getName(), color : Std.string(hero.getColor()), plan : Std.string(hero.getPlan()), talent : hero.getTalent(), effort : hero.getEffort(), hp : hero.getHp(), skills : Lambda.array(Lambda.map(hero.getSkills(),function(e) {
+		return e.id;
+	})), returnAt : hero.getReturnAt()};
+}
+rpg.service.HeroService.fromStored = function(stored) {
+	var hero = new rpg.Hero(stored.id,stored.name,rpg.Colors.valueOf(stored.color),rpg.Plans.valueOf(stored.plan),stored.talent,stored.effort,Lambda.array(Lambda.map(stored.skills,function(e) {
+		return rpg.service.SkillService.get(e);
+	})),stored.returnAt);
+	hero.setHp(stored.hp);
+	return hero;
+}
+rpg.service.HeroService.generateId = function() {
+	return Std.string(rpg.Rand.next());
+}
+rpg.service.HeroService.calcCurrentHp = function(hero,now) {
+	var hp = hero.getHp() + (now - hero.getReturnAt()) / rpg.service.HeroService.MSEC_PER_RECOVER;
+	return Math.min(hp,hero.getParameter().health) | 0;
+}
+rpg.service.SkillService = function() { }
+rpg.service.SkillService.__name__ = true;
+rpg.service.SkillService.get = function(id) {
+	return rpg.service.SkillService.master.get(id);
+}
+rpg.service.SkillService.set = function(id,skill) {
+	rpg.service.SkillService.master.set(id,skill);
+}
+rpg.service.Storage = function() { }
+rpg.service.Storage.__name__ = true;
+rpg.service.Storage.prototype = {
+	__class__: rpg.service.Storage
+}
 function $iterator(o) { if( o instanceof Array ) return function() { return HxOverrides.iter(o); }; return typeof(o.iterator) == 'function' ? $bind(o,o.iterator) : o.iterator; };
 var $_, $fid = 0;
 function $bind(o,m) { if( m == null ) return null; if( m.__id__ == null ) m.__id__ = $fid++; var f; if( o.hx__closures__ == null ) o.hx__closures__ = {}; else f = o.hx__closures__[m.__id__]; if( f == null ) { f = function(){ return f.method.apply(f.scope, arguments); }; f.scope = o; f.method = m; o.hx__closures__[m.__id__] = f; } return f; };
@@ -902,4 +1214,8 @@ rpg.Parameters.ZERO = { attack : 0, block : 0, speed : 0, health : 0};
 rpg.Parameters.ONE = { attack : 1, block : 1, speed : 1, health : 1};
 rpg._Rand.RandImpl.MPM = 2147483647.0;
 rpg.Rand.gen = new rpg._Rand.RandImpl();
+rpg.service.DungeonService.master = new haxe.ds.IntMap();
+rpg.service.HeroService.HERO_PER_TEAM = 4;
+rpg.service.HeroService.MSEC_PER_RECOVER = 60000;
+rpg.service.SkillService.master = new haxe.ds.IntMap();
 window.rpg=rpg;})();

@@ -27,7 +27,7 @@ script#empty type="text/html"
   .panel-heading
     h3.panel-title 目的地
   .panel-body
-    select.form-control data-bind="options: depth, optionsText: 'txt', optionsValue: 'value'"
+    select.form-control data-bind="options: depth, optionsText: 'txt', optionsValue: 'value', value:selectedDepth"
 
 /!nav.navbar.navbar-default.navbar-fixed-bottom role="navigation"
   .container-fluid
@@ -45,5 +45,6 @@ script#empty type="text/html"
 - content_for :post_script
   script src="js/vendor/knockout-3.0.0.js"
   script src="js/rpg.js"
+  script src="js/master/skill.js"
   script src="js/master/dungeon.js"
   script src="js/scene/dungeon.js"

@@ -16,6 +16,7 @@ $ ->
         null
     teamTpl: (hero) -> if hero then 'hero' else 'empty'
     depth: [1..dungeon.depth].map (e) -> (txt:"#{dungeon.preDepth}#{e}#{dungeon.postDepth}", value:e)
+    selectedDepth: 1
   ko.applyBindings vm
 
   setInterval ->
@@ -26,5 +27,5 @@ $ ->
   , 1000
 
   $('#commit').click ->
-    service.dungeon.commit()
+    service.dungeon.commit vm.selectedDepth
     location.href = 'battle.html'
