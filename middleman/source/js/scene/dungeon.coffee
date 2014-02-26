@@ -16,7 +16,7 @@ $ ->
         null
     teamTpl: (hero) -> if hero then 'hero' else 'empty'
     depth: [1..dungeon.depth].map (e) -> (txt:"#{dungeon.preDepth}#{e}#{dungeon.postDepth}", value:e)
-    selectedDepth: 1
+    selectedDepth: dungeon.depth
   ko.applyBindings vm
 
   setInterval ->
