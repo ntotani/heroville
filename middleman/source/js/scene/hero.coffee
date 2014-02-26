@@ -12,6 +12,9 @@ $ ->
     hpRate: -> 100 * @hp() / hero.getParameter().health
     skills:hero.skills.map (e) -> (name:e.name, color:e.color[0].toLowerCase())
     footer:'back'
+    talent:hero.talent
+    effort:hero.effort
+    param:hero.getParameter()
   ko.applyBindings vm
 
   setInterval ->

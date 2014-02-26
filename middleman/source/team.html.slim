@@ -1,0 +1,34 @@
+---
+title: team
+---
+
+.page-header パーティ入れ替え
+.list-group data-bind="template:{name:teamTpl, foreach:team}"
+p.text-center
+  span.glyphicon.glyphicon-arrow-down
+  span.glyphicon.glyphicon-arrow-up
+.list-group data-bind="template:{name:'hero', foreach:others}"
+
+script#hero type="text/html"
+  a.list-group-item data-bind="click:$parent.onHeroClick"
+    span.pull-left data-bind="css:iconClasses()"
+    span data-bind="text:name"
+    span.glyphicon.pull-right data-bind="css:{'glyphicon-arrow-down':inTeam(), 'glyphicon-arrow-up':!inTeam()}"
+    = partial "layouts/hpgauge"
+
+script#empty type="text/html"
+  .list-group-item ---
+
+nav.navbar.navbar-default.navbar-fixed-bottom role="navigation"
+  .container-fluid
+    .row
+      .col-xs-6
+        a.btn.btn-default.btn-lg.btn-block.navbar-btn href="javascript:history.back()" role="button" キャンセル
+      .col-xs-6
+        button#commit.btn.btn-primary.btn-lg.btn-block.navbar-btn type="button" data-bind="css:{disabled:!validate()}" 決定
+    
+- content_for :post_script
+  script src="js/vendor/knockout-3.0.0.js"
+  script src="js/rpg.js"
+  script src="js/master/skill.js"
+  script src="js/scene/team.js"

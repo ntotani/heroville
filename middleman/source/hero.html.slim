@@ -24,6 +24,33 @@ title: hero
     h3.panel-title パラメータ
   .panel-body
     canvas#chart.center-block width="240" height="240"
+    table.table.table-condensed
+      thead
+        tr
+          th
+          th 攻撃
+          th 防御
+          th 速度
+          th 体力
+      tbody
+        tr
+          td 才能
+          td data-bind="text:talent.attack"
+          td data-bind="text:talent.block"
+          td data-bind="text:talent.speed"
+          td data-bind="text:talent.health"
+        tr
+          td 経験
+          td data-bind="text:effort.attack"
+          td data-bind="text:effort.block"
+          td data-bind="text:effort.speed"
+          td data-bind="text:effort.health"
+        tr.info
+          td 総合
+          td data-bind="text:param.attack"
+          td data-bind="text:param.block"
+          td data-bind="text:param.speed"
+          td data-bind="text:param.health"
 
 nav.navbar.navbar-default.navbar-fixed-bottom role="navigation"
   .container-fluid data-bind="template:footer"

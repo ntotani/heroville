@@ -11,6 +11,16 @@ skills =
     hitRate : 100
   2:
     id      : 2
+    name    : '水攻撃'
+    desc    : '水の攻撃'
+    color   : 'WATER'
+    type    : 'ATTACK'
+    target  : 'ENEMY'
+    effect  : 'ATTACK'
+    power   : 40
+    hitRate : 100
+  3:
+    id      : 3
     name    : '木攻撃'
     desc    : '木の攻撃'
     color   : 'TREE'

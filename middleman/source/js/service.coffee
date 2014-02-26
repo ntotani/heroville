@@ -24,6 +24,7 @@ service =
       team = rpg.service.HeroService.getTeam storage
       team.push null while team.lenght < rpg.service.HeroService.HERO_PER_TEAM
       [0...4].map (i) -> if team[i] then team[i] else null
+    setTeam: storage.setTeam
     calcCurrentHp: (hero, now) -> rpg.service.HeroService.calcCurrentHp hero, now
 
   dungeon:

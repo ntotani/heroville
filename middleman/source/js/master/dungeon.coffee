@@ -10,7 +10,8 @@ dungeons =
     lotteryTable:[]
     nameTable: ['ドーリョ', 'ブーカ', 'ジョーシ']
     boss:[
-      {name: '_RAND_', color:'TREE', plan:'MONKEY', effort:{attack:0, block:0, speed:0, health:0}, skills:[2]}
+      {name: '_RAND_', color:'TREE', plan:'MONKEY', effort:{attack:0, block:0, speed:0, health:0}, skills:[3]}
+      {name: '_RAND_', color:'TREE', plan:'MONKEY', effort:{attack:0, block:0, speed:0, health:0}, skills:[3]}
     ]
   2:
     id:2
@@ -23,14 +24,17 @@ dungeons =
     lotteryTable:[
       {
         enemies:[
-          {name: '_RAND_', color:'TREE', plan:'MONKEY', effort:{attack:0, block:0, speed:0, health:0}, skills:[2]}
+          {name: '_RAND_', color:'TREE', plan:'MONKEY', effort:{attack:0, block:0, speed:0, health:0}, skills:[3]}
+          {name: '_RAND_', color:'TREE', plan:'MONKEY', effort:{attack:0, block:0, speed:0, health:0}, skills:[3]}
         ]
         rate:100
       }
     ]
     nameTable: ['ドーリョ', 'ブーカ', 'ジョーシ']
     boss:[
-      {name: '_RAND_', color:'TREE', plan:'MONKEY', effort:{attack:0, block:0, speed:0, health:0}, skills:[2]}
+      {name: '_RAND_', color:'TREE', plan:'MONKEY', effort:{attack:0, block:0, speed:0, health:0}, skills:[3]}
+      {name: '_RAND_', color:'TREE', plan:'MONKEY', effort:{attack:0, block:0, speed:0, health:0}, skills:[3]}
+      {name: '_RAND_', color:'TREE', plan:'MONKEY', effort:{attack:0, block:0, speed:0, health:0}, skills:[3]}
     ]
   3:
     id:3
@@ -43,15 +47,19 @@ dungeons =
     lotteryTable:[
       {
         enemies:[
-          {name: '_RAND_', color:'TREE', plan:'MONKEY', effort:{attack:0, block:0, speed:0, health:0}, skills:[2]}
+          {name: '_RAND_', color:'TREE', plan:'MONKEY', effort:{attack:0, block:0, speed:0, health:0}, skills:[3]}
+          {name: '_RAND_', color:'TREE', plan:'MONKEY', effort:{attack:0, block:0, speed:0, health:0}, skills:[3]}
+          {name: '_RAND_', color:'TREE', plan:'MONKEY', effort:{attack:0, block:0, speed:0, health:0}, skills:[3]}
         ]
         rate:100
       }
     ]
     nameTable: ['ドーリョ', 'ブーカ', 'ジョーシ']
     boss:[
-      {name: '前のボス', color:'TREE', plan:'MONKEY', effort:{attack:0, block:0, speed:0, health:0}, skills:[2]}
-      {name: '_RAND_', color:'TREE', plan:'MONKEY', effort:{attack:0, block:0, speed:0, health:0}, skills:[2]}
+      {name: 'グリーン勤怠', color:'TREE', plan:'MONKEY', effort:{attack:0, block:0, speed:0, health:0}, skills:[3]}
+      {name: '_RAND_', color:'TREE', plan:'MONKEY', effort:{attack:0, block:0, speed:0, health:0}, skills:[3]}
+      {name: '_RAND_', color:'TREE', plan:'MONKEY', effort:{attack:0, block:0, speed:0, health:0}, skills:[3]}
+      {name: '_RAND_', color:'TREE', plan:'MONKEY', effort:{attack:0, block:0, speed:0, health:0}, skills:[3]}
     ]
 
 rpg.service.DungeonService.set e.id, e for id, e of dungeons

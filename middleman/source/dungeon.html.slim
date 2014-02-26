@@ -7,21 +7,22 @@ title: dungeon
   p data-bind="text:desc"
 
 .panel.panel-default
-  .panel-heading
-    h3.panel-title パーティ
+  .panel-heading href="team.html"
+    a href="team.html"
+      h3.panel-title
+        | パーティ
+        span.glyphicon.glyphicon-chevron-right.pull-right
   .panel-body
     .list-group data-bind="template:{name:teamTpl, foreach:team}"
 
 script#hero type="text/html"
-  a.list-group-item
+  .list-group-item
     span.pull-left data-bind="css:iconClasses()"
     span data-bind="text:name"
     = partial "layouts/hpgauge"
 
 script#empty type="text/html"
-  a.list-group-item
-    | ---
-    span.glyphicon.glyphicon-chevron-right.pull-right
+  .list-group-item ---
 
 .panel.panel-default
   .panel-heading

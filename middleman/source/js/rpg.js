@@ -9,14 +9,6 @@ HxOverrides.iter = function(a) {
 		return this.arr[this.cur++];
 	}};
 }
-var IntIterator = function(min,max) {
-	this.min = min;
-	this.max = max;
-};
-IntIterator.__name__ = true;
-IntIterator.prototype = {
-	__class__: IntIterator
-}
 var Lambda = function() { }
 Lambda.__name__ = true;
 Lambda.array = function(it) {
@@ -1021,7 +1013,9 @@ rpg.service.DungeonService.set = function(id,dungeon) {
 rpg.service.DungeonService.commit = function(storage,now,dungeon,depth) {
 	var progress = storage.getProgress();
 	if(progress < dungeon.getId()) throw rpg.service.DungeonError.INVALID_PROGRESS;
-	var team = rpg.service.HeroService.getTeam(storage);
+	var team = Lambda.array(Lambda.filter(rpg.service.HeroService.getTeam(storage),function(e) {
+		return e != null;
+	}));
 	var _g = 0;
 	while(_g < team.length) {
 		var hero = team[_g];
@@ -1106,17 +1100,26 @@ rpg.service.DungeonError.INVALID_TEAM.__enum__ = rpg.service.DungeonError;
 rpg.service.HeroService = function() { }
 rpg.service.HeroService.__name__ = true;
 rpg.service.HeroService.createInit = function() {
-	var id = rpg.service.HeroService.generateId();
-	var talent = { attack : 7, block : 7, speed : 16, health : 7};
-	var effort = rpg.Parameters.ZERO;
-	var skill = rpg.service.SkillService.get(1);
-	return new rpg.Hero(id,"ハルヒロ",rpg.Color.FIRE,rpg.Plan.MONKEY,talent,effort,[skill],0);
+	var names = ["ファイア案件","レッドオーシャン","氷河期","ブルー"];
+	var colors = [rpg.Color.FIRE,rpg.Color.FIRE,rpg.Color.WATER,rpg.Color.WATER];
+	var skills = [1,1,2,2];
+	var heros = [];
+	var _g1 = 0, _g = rpg.service.HeroService.HERO_PER_TEAM;
+	while(_g1 < _g) {
+		var i = _g1++;
+		var id = rpg.service.HeroService.generateId();
+		var talent = rpg.Hero.generateTalent();
+		var effort = rpg.Parameters.ZERO;
+		var skill = rpg.service.SkillService.get(skills[i]);
+		heros.push(new rpg.Hero(id,names[i],colors[i],rpg.Plan.MONKEY,talent,effort,[skill],0));
+	}
+	return heros;
 }
 rpg.service.HeroService.getAll = function(storage) {
 	var storedHeros = storage.getHeros();
 	if(storedHeros.length == 0) {
-		var hero = rpg.service.HeroService.createInit();
-		storedHeros = [rpg.service.HeroService.toStored(hero)];
+		var inits = Lambda.map(rpg.service.HeroService.createInit(),rpg.service.HeroService.toStored);
+		storedHeros = Lambda.array(inits);
 		storage.setHeros(storedHeros);
 	}
 	var heros = new haxe.ds.StringMap();
@@ -1130,14 +1133,17 @@ rpg.service.HeroService.getAll = function(storage) {
 }
 rpg.service.HeroService.getTeam = function(storage) {
 	var heros = rpg.service.HeroService.getAll(storage);
-	var team = storage.getTeam();
-	if(team.length < 1) team = Lambda.array(Lambda.map(heros,function(e) {
+	var storedTeam = storage.getTeam();
+	if(storedTeam.length < 1) storedTeam = Lambda.array(Lambda.map(heros,function(e) {
 		return e.getId();
 	}));
-	return Lambda.array(Lambda.mapi([new IntIterator(0,rpg.service.HeroService.HERO_PER_TEAM)],function(i,e) {
-		if(team.length <= i) return null;
-		return heros.get(team[i]);
-	}));
+	var team = [];
+	var _g1 = 0, _g = rpg.service.HeroService.HERO_PER_TEAM;
+	while(_g1 < _g) {
+		var i = _g1++;
+		if(storedTeam.length <= i) team.push(null); else team.push(heros.get(storedTeam[i]));
+	}
+	return team;
 }
 rpg.service.HeroService.update = function(storage,heros) {
 	var heroMap = new haxe.ds.StringMap();
