@@ -9,6 +9,9 @@ storage =
   setProgress: (progress) -> localStorage['progress'] = JSON.stringify progress
 
 service =
+  user:
+    getProgress: storage.getProgress
+
   hero:
     get: (id) -> @getAll()[id]
     setSelected: (id) -> localStorage['selectedHero'] = id
