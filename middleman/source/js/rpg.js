@@ -456,11 +456,11 @@ rpg.Dungeon = function(id,area,name,desc,depth,preDepth,postDepth,lotteryTable,n
 };
 rpg.Dungeon.__name__ = true;
 rpg.Dungeon.prototype = {
-	toHeros: function(enemies) {
+	toHeros: function(enemies,depth) {
 		var _g = this;
 		return Lambda.array(Lambda.mapi(enemies,function(i,e) {
 			var name = e.name == "_RAND_"?_g.nameTable[rpg.Rand.next() % _g.nameTable.length]:e.name;
-			return new rpg.Hero("enemy" + i,name,e.color,e.plan,rpg.Hero.generateTalent(),e.effort,e.skills,0);
+			return new rpg.Hero("enemy_" + depth + "_" + i,name,e.color,e.plan,rpg.Hero.generateTalent(),e.effort,e.skills,0);
 		}));
 	}
 	,spawnEnemies: function() {
@@ -477,7 +477,7 @@ rpg.Dungeon.prototype = {
 		throw "invalid table";
 	}
 	,solveAuto: function(heros,targetDepth,onBattle) {
-		var result = { battles : []};
+		var result = { battles : [], join : ""};
 		var id2hero = new haxe.ds.StringMap();
 		var _g = 0;
 		while(_g < heros.length) {
@@ -488,7 +488,7 @@ rpg.Dungeon.prototype = {
 		var _g1 = 0, _g = this.depth;
 		while(_g1 < _g) {
 			var i = _g1++;
-			var enemies = this.toHeros(i + 1 == this.depth?this.boss:this.spawnEnemies());
+			var enemies = this.toHeros(i + 1 == this.depth?this.boss:this.spawnEnemies(),i + 1);
 			var engine = new rpg.battle.Engine(heros,enemies);
 			var friendAgent = new rpg.MonkeyAI(engine,0);
 			var enemyAgent = new rpg.MonkeyAI(engine,1);
@@ -663,6 +663,9 @@ rpg.Hero.prototype = {
 	}
 	,getName: function() {
 		return this.name;
+	}
+	,setId: function(id) {
+		this.id = id;
 	}
 	,getId: function() {
 		return this.id;
@@ -1042,8 +1045,7 @@ rpg.service.DungeonService.commit = function(storage,now,dungeon,depth) {
 	});
 	var storedResult = { battles : Lambda.array(Lambda.map(result.battles,function(e) {
 		return { teamRed : Lambda.array(Lambda.map(e.teamRed,rpg.service.HeroService.toStored)), teamBlue : Lambda.array(Lambda.map(e.teamBlue,rpg.service.HeroService.toStored)), turns : e.turns};
-	}))};
-	storage.setDungeonResult(now,storedResult);
+	})), join : result.join};
 	if(clearDepth >= Math.min(depth,dungeon.getDepth())) {
 		var _g = 0;
 		while(_g < team.length) {
@@ -1057,6 +1059,8 @@ rpg.service.DungeonService.commit = function(storage,now,dungeon,depth) {
 				if(rpg.service.DungeonService.isAreaGoal(dungeon)) {
 					var bossTeam = result.battles[result.battles.length - 1].teamBlue;
 					var boss = bossTeam[0];
+					storedResult.join = boss.getId();
+					boss.setId(rpg.service.HeroService.generateId());
 					boss.recoverAllHp();
 					team.push(boss);
 				}
@@ -1071,12 +1075,13 @@ rpg.service.DungeonService.commit = function(storage,now,dungeon,depth) {
 		hero.setReturnAt(now);
 	}
 	rpg.service.HeroService.update(storage,team);
+	storage.setDungeonResult(now,storedResult);
 }
 rpg.service.DungeonService.getLatestResult = function(storage) {
 	var storedResult = storage.getLatestDungeonResult();
 	return { battles : Lambda.array(Lambda.map(storedResult.battles,function(e) {
 		return { teamRed : Lambda.array(Lambda.map(e.teamRed,rpg.service.HeroService.fromStored)), teamBlue : Lambda.array(Lambda.map(e.teamBlue,rpg.service.HeroService.fromStored)), turns : e.turns};
-	}))};
+	})), join : storedResult.join};
 }
 rpg.service.DungeonService.fromStored = function(stored) {
 	return { name : stored.name, color : rpg.Colors.valueOf(stored.color), plan : rpg.Plans.valueOf(stored.plan), effort : stored.effort, skills : Lambda.array(Lambda.map(stored.skills,function(e) {

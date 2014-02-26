@@ -32,20 +32,28 @@ $ ->
   engine = new rpg.battle.Engine result.battles[0].teamRed, result.battles[0].teamBlue
   engine.applyNewTurn()
   logs = _.flatten result.battles[0].turns
-  docElem = $ document.documentElement
+  Prms = rpg.Parameters
+  exp = Prms.ZERO
   parseResult = ->
     if engine.isFinish()
+      exp = Prms.sum(exp, enemy.calcExp()) for enemy in result.battles[currentBtl].teamBlue
       currentAct = 0
       currentBtl++
       if currentBtl >= result.battles.length or engine.isWin(1)
         messages = if engine.isWin(1)
           ['クエスト失敗...']
         else
-          ['クエスト成功！！', '経験値を手に入れた！'].concat(result.battles[0].teamRed.filter((e) ->
-            e.getLevel() > service.hero.get(e.id).getLevel()
+          prmName = {attack:'攻撃', block:'防御', speed:'速度', health:'体力'}
+          expMes = "#{v}の#{prmName[k]}経験値を得た" for k, v of exp when v > 0
+          calcLevel = rpg.Hero.calcLevel
+          lvUpMes = result.battles[0].teamRed.filter((e) ->
+            calcLevel(Prms.sum(e.effort, exp)) > e.getLevel()
           ).map((e) ->
-              "#{e.name}はレベル#{e.getLevel()}になった！")
+              "#{e.name}はレベル#{calcLevel(Prms.sum(e.effort, exp))}になった！"
           )
+          joinMes = (("#{enemy.name}が仲間になった" for enemy in battle.teamBlue when enemy.id is result.join) for battle in result.battles)
+          joinMes = _.flatten joinMes
+          ['クエスト成功！'].concat expMes, lvUpMes, joinMes
         lastLog = ko.observableArray()
         vm.battles.unshift lastLog
         vm.onStepClick = showResult lastLog, messages
@@ -148,5 +156,6 @@ $ ->
       avatars[id] = avatar
     core.rootScene.addChild avatarBg
     core.rootScene.addChild hero for id, hero of avatars
+  docElem = $ document.documentElement
   $('#enchant-stage').css(position:'fixed', top:0, left:(docElem.width() - 320) / 2, 'z-index': 1030)
 
