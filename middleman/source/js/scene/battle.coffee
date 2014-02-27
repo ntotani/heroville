@@ -1,6 +1,7 @@
 enchant()
 $ ->
   result = service.dungeon.getResult()
+  area = service.dungeon.get(result.dungeonId).area
 
   hs2vm = (e) ->
     color: e.color[0].toLowerCase()
@@ -33,7 +34,7 @@ $ ->
   engine.applyNewTurn()
   logs = _.flatten result.battles[0].turns
   Prms = rpg.Parameters
-  exp = Prms.ZERO
+  exp = Prms.zero()
   parseResult = ->
     if engine.isFinish()
       exp = Prms.sum(exp, enemy.calcExp()) for enemy in result.battles[currentBtl].teamBlue
@@ -85,7 +86,7 @@ $ ->
     ->
       battleVm.unshift {txt:messages.shift(), tpl:'action-tpl'}
       if messages.length < 1
-        vm.onStepClick = (-> location.href = 'map.html')
+        vm.onStepClick = (-> location.href = "map.html?area=#{area}")
         vm.finish true
   vm.onStepClick = parseResult
 
@@ -138,7 +139,8 @@ $ ->
       core.rootScene.addChild avatar
   core = new Core 320, 176
   core.preload("img/avatarBg#{e}.png" for e in [1,2,3]).start().next ->
-    avatarBg = new AvatarBG 1
+    bgMap = {1:1, 2:3}
+    avatarBg = new AvatarBG(bgMap[area])
     avatarBg.scrollPos = 0
     avatarBg.scrollTarget = 0
     avatarBg.onenterframe = -> @scroll ++@scrollPos if @scrollPos < @scrollTarget

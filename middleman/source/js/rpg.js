@@ -465,11 +465,12 @@ rpg.Dungeon.prototype = {
 			var lot = _g1[_g];
 			++_g;
 			if(lot.rate > pivot) return lot.enemies;
+			pivot -= lot.rate;
 		}
 		throw "invalid table";
 	}
 	,solveAuto: function(heros,targetDepth,onBattle) {
-		var result = { battles : [], join : ""};
+		var result = { dungeonId : this.id, battles : [], join : ""};
 		var id2hero = new haxe.ds.StringMap();
 		var _g = 0;
 		while(_g < heros.length) {
@@ -579,9 +580,7 @@ rpg.Hero.prototype = {
 		var _g = this;
 		switch( (_g.color)[1] ) {
 		case 2:
-			break;
 		case 3:
-			break;
 		case 4:
 			exp.attack = val;
 			break;
@@ -589,7 +588,6 @@ rpg.Hero.prototype = {
 			exp.block = val;
 			break;
 		case 1:
-			break;
 		case 5:
 			exp.speed = val;
 			break;
@@ -604,11 +602,13 @@ rpg.Hero.prototype = {
 		var sum = this.effort.attack + this.effort.block + this.effort.speed + this.effort.health;
 		return Math.min(rpg.Hero.EFFORT_SUM_LIMIT - sum,ret) | 0;
 	}
-	,applyExp: function(effort) {
-		this.effort.attack += this.trimEffort(this.effort.attack,effort.attack);
-		this.effort.block += this.trimEffort(this.effort.block,effort.block);
-		this.effort.speed += this.trimEffort(this.effort.speed,effort.speed);
-		this.effort.health += this.trimEffort(this.effort.health,effort.health);
+	,applyExp: function(exp) {
+		var prevLevel = this.getLevel();
+		this.effort.attack += this.trimEffort(this.effort.attack,exp.attack);
+		this.effort.block += this.trimEffort(this.effort.block,exp.block);
+		this.effort.speed += this.trimEffort(this.effort.speed,exp.speed);
+		this.effort.health += this.trimEffort(this.effort.health,exp.health);
+		if(this.getLevel() > prevLevel) this.recoverAllHp();
 	}
 	,recoverAllHp: function() {
 		this.hp = this.getParameter().health;
@@ -673,6 +673,12 @@ rpg.HeroError.INVALID_EFFORT.toString = $estr;
 rpg.HeroError.INVALID_EFFORT.__enum__ = rpg.HeroError;
 rpg.Parameters = function() { }
 rpg.Parameters.__name__ = true;
+rpg.Parameters.zero = function() {
+	return { attack : 0, block : 0, speed : 0, health : 0};
+}
+rpg.Parameters.one = function() {
+	return { attack : 1, block : 1, speed : 1, health : 1};
+}
 rpg.Parameters.sum = function(a,b) {
 	return { attack : a.attack + b.attack, block : a.block + b.block, speed : a.speed + b.speed, health : a.health + b.health};
 }
@@ -1024,7 +1030,7 @@ rpg.service.DungeonService.commit = function(storage,now,dungeon,depth) {
 		if(hp < 1) throw rpg.service.DungeonError.INVALID_TEAM;
 		hero.setHp(hp);
 	}
-	var exp = rpg.Parameters.ZERO;
+	var exp = rpg.Parameters.zero();
 	var clearDepth = 0;
 	var result = dungeon.solveAuto(team,depth,function(engine) {
 		if(!engine.isWin(0)) return;
@@ -1037,7 +1043,7 @@ rpg.service.DungeonService.commit = function(storage,now,dungeon,depth) {
 			exp = rpg.Parameters.sum(exp,enemy.calcExp());
 		}
 	});
-	var storedResult = { battles : Lambda.array(Lambda.map(result.battles,function(e) {
+	var storedResult = { dungeonId : dungeon.getId(), battles : Lambda.array(Lambda.map(result.battles,function(e) {
 		return { teamRed : Lambda.array(Lambda.map(e.teamRed,rpg.service.HeroService.toStored)), teamBlue : Lambda.array(Lambda.map(e.teamBlue,rpg.service.HeroService.toStored)), turns : e.turns};
 	})), join : result.join};
 	if(clearDepth >= Math.min(depth,dungeon.getDepth())) {
@@ -1073,7 +1079,7 @@ rpg.service.DungeonService.commit = function(storage,now,dungeon,depth) {
 }
 rpg.service.DungeonService.getLatestResult = function(storage) {
 	var storedResult = storage.getLatestDungeonResult();
-	return { battles : Lambda.array(Lambda.map(storedResult.battles,function(e) {
+	return { dungeonId : storedResult.dungeonId, battles : Lambda.array(Lambda.map(storedResult.battles,function(e) {
 		return { teamRed : Lambda.array(Lambda.map(e.teamRed,rpg.service.HeroService.fromStored)), teamBlue : Lambda.array(Lambda.map(e.teamBlue,rpg.service.HeroService.fromStored)), turns : e.turns};
 	})), join : storedResult.join};
 }
@@ -1109,7 +1115,7 @@ rpg.service.HeroService.createInit = function() {
 		var i = _g1++;
 		var id = rpg.service.HeroService.generateId();
 		var talent = rpg.Hero.generateTalent();
-		var effort = rpg.Parameters.ZERO;
+		var effort = rpg.Parameters.zero();
 		var skill = rpg.service.SkillService.get(skills[i]);
 		heros.push(new rpg.Hero(id,names[i],colors[i],rpg.Plan.MONKEY,talent,effort,[skill],0));
 	}
@@ -1221,8 +1227,6 @@ var Enum = { };
 rpg.Hero.MAX_TALENT = 16;
 rpg.Hero.EFFORT_LIMIT = 128;
 rpg.Hero.EFFORT_SUM_LIMIT = 256;
-rpg.Parameters.ZERO = { attack : 0, block : 0, speed : 0, health : 0};
-rpg.Parameters.ONE = { attack : 1, block : 1, speed : 1, health : 1};
 rpg._Rand.RandImpl.MPM = 2147483647.0;
 rpg.Rand.gen = new rpg._Rand.RandImpl();
 rpg.service.DungeonService.master = new haxe.ds.IntMap();

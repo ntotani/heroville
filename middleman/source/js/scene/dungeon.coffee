@@ -17,7 +17,7 @@ $ ->
     teamTpl: (hero) -> if hero then 'hero' else 'empty'
     depth: [1..dungeon.depth].map (e) -> (txt:"#{dungeon.preDepth}#{e}#{dungeon.postDepth}", value:e)
     selectedDepth: dungeon.depth
-    validate: -> vm.team.every (e) -> e.hp() > 0
+    validate: -> vm.team.filter((e)->e isnt null).every (e) -> e.hp() > 0
   ko.applyBindings vm
 
   setInterval ->
