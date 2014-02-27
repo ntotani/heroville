@@ -5,7 +5,7 @@ window.onload = ->
   hei = window.innerHeight - 55
   core = new Core(wid, hei)
   core.preload('img/map1.png', 'img/icon0.png').start().next ->
-    area = service.area.master[1]
+    area = service.area.get()
     map = new Map(16, 16)
     map.image = core.assets['img/map1.png']
     col = Math.ceil(wid / 16)
@@ -77,6 +77,7 @@ window.onload = ->
     areaCleared = progress > _.last(dungeons)
     roads.push calcRoad(point.i + rowDiff, point.j + colDiff, area.exit.i + rowDiff, area.exit.j + colDiff) if areaCleared
     currentRoad = roads.shift()
+    pointsLayer = new Group
     parseRoad = ->
       if currentRoad.length > 0
         e = currentRoad.pop()
@@ -85,9 +86,10 @@ window.onload = ->
         point.frame = 47
         if currentRoad.length <= 0 and (roads.length > 0 || not areaCleared)
           point.frame = 45
+          point.tl.scaleTo(2,2,20).scaleTo(1,1,20).loop()
         point.x = e.j * 16 + map.x
         point.y = e.i * 16 + map.y
-        core.rootScene.addChild point
+        pointsLayer.addChild point
       else if roads.length > 0
         currentRoad = roads.shift()
         currentRoad.pop()
@@ -108,3 +110,28 @@ window.onload = ->
         service.dungeon.setSelected dungeonID
         location.href = 'dungeon.html'
     core.rootScene.addChild map
+    core.rootScene.addChild pointsLayer
+    selectedArea = parseInt(service.area.getSelected())
+    if areaCleared and service.area.master[selectedArea + 1]
+      arrow = new Sprite 16, 16
+      arrow.image = core.assets['img/icon0.png']
+      arrow.frame = 42
+      arrow.x = (area.exit.j + colDiff) * 16 + map.x
+      arrow.y = (area.exit.i + rowDiff) * 16 + map.x
+      arrow.tl.moveBy(5, 0, 5).moveBy(-5, 0, 10).loop()
+      arrow.ontouchend = ->
+        service.area.setSelected(selectedArea + 1)
+        location.href = 'map.html'
+      core.rootScene.addChild arrow
+    if selectedArea > 1
+      arrow = new Sprite 16, 16
+      arrow.image = core.assets['img/icon0.png']
+      arrow.frame = 42
+      arrow.scaleX = -1
+      arrow.x = (area.enter.j + colDiff) * 16 + map.x
+      arrow.y = (area.enter.i + rowDiff) * 16 + map.x
+      arrow.tl.moveBy(-5, 0, 5).moveBy(5, 0, 10).loop()
+      arrow.ontouchend = ->
+        service.area.setSelected(selectedArea - 1)
+        location.href = 'map.html'
+      core.rootScene.addChild arrow

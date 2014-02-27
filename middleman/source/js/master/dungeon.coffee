@@ -61,5 +61,30 @@ dungeons =
       {name: '_RAND_', color:'TREE', plan:'MONKEY', effort:{attack:0, block:0, speed:0, health:0}, skills:[3]}
       {name: '_RAND_', color:'TREE', plan:'MONKEY', effort:{attack:0, block:0, speed:0, health:0}, skills:[3]}
     ]
+  4:
+    id:4
+    area:2
+    name:'つぼ'
+    desc:'もう取り返しがつかない'
+    depth:3
+    preDepth:'エリア'
+    postDepth:''
+    lotteryTable:[
+      {
+        enemies:[
+          {name: '_RAND_', color:'TREE', plan:'MONKEY', effort:{attack:0, block:0, speed:0, health:0}, skills:[3]}
+          {name: '_RAND_', color:'TREE', plan:'MONKEY', effort:{attack:0, block:0, speed:0, health:0}, skills:[3]}
+          {name: '_RAND_', color:'TREE', plan:'MONKEY', effort:{attack:0, block:0, speed:0, health:0}, skills:[3]}
+        ]
+        rate:100
+      }
+    ]
+    nameTable: ['ドーリョ', 'ブーカ', 'ジョーシ']
+    boss:[
+      {name: 'グリーン勤怠', color:'TREE', plan:'MONKEY', effort:{attack:0, block:0, speed:0, health:0}, skills:[3]}
+      {name: '_RAND_', color:'TREE', plan:'MONKEY', effort:{attack:0, block:0, speed:0, health:0}, skills:[3]}
+      {name: '_RAND_', color:'TREE', plan:'MONKEY', effort:{attack:0, block:0, speed:0, health:0}, skills:[3]}
+      {name: '_RAND_', color:'TREE', plan:'MONKEY', effort:{attack:0, block:0, speed:0, health:0}, skills:[3]}
+    ]
 
 rpg.service.DungeonService.set e.id, e for id, e of dungeons

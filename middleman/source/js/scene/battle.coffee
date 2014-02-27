@@ -46,8 +46,12 @@ $ ->
           prmName = {attack:'攻撃', block:'防御', speed:'速度', health:'体力'}
           expMes = "#{v}の#{prmName[k]}経験値を得た" for k, v of exp when v > 0
           calcLevel = rpg.Hero.calcLevel
+          friends = (hero for id, hero of engine.heros.h when hero.team is 0).reduce (p, e) ->
+            p[e.hero.id] = e
+            return p
+          , {}
           lvUpMes = result.battles[0].teamRed.filter((e) ->
-            calcLevel(Prms.sum(e.effort, exp)) > e.getLevel()
+            calcLevel(Prms.sum(e.effort, exp)) > e.getLevel() and friends[e.id].alive()
           ).map((e) ->
               "#{e.name}はレベル#{calcLevel(Prms.sum(e.effort, exp))}になった！"
           )
@@ -71,7 +75,7 @@ $ ->
       actor = engine.getHero log.actor
       target = engine.getHero log.target
       skill = actor.hero.skills[log.skill]
-      if not actor.alive()
+      if not actor.alive() or log.effect is 0
         parseResult()
       else
         actAvatar actor, target, skill
@@ -118,8 +122,9 @@ $ ->
       if avatar.scaleX is 1
         avatar.remove()
       else
+        avatar.nextAction = if avatar.action is 'dead' then 'dead' else 'stop'
         avatar.action = 'run'
-        avatar.tl.delay(15).then -> @action = 'stop'
+        avatar.tl.delay(15).then -> @action = @nextAction
     avatarBg.scrollTarget = 15
     for e, i in enemies
       avatar = new Avatar e.hero.color[0]
