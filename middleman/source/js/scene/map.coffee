@@ -5,7 +5,13 @@ window.onload = ->
   hei = window.innerHeight - 55
   core = new Core(wid, hei)
   core.preload('img/map1.png', 'img/icon0.png').start().next ->
-    area = service.area.get()
+    params = location.search.substr(1).split('&').reduce (p, e) ->
+      e = e.split('=')
+      p[e[0]] = e[1]
+      return p
+    , {}
+    selectedArea = parseInt(params.area || '1')
+    area = service.area.master[selectedArea]
     map = new Map(16, 16)
     map.image = core.assets['img/map1.png']
     col = Math.ceil(wid / 16)
@@ -111,7 +117,6 @@ window.onload = ->
         location.href = 'dungeon.html'
     core.rootScene.addChild map
     core.rootScene.addChild pointsLayer
-    selectedArea = parseInt(service.area.getSelected())
     if areaCleared and service.area.master[selectedArea + 1]
       arrow = new Sprite 16, 16
       arrow.image = core.assets['img/icon0.png']
@@ -120,8 +125,7 @@ window.onload = ->
       arrow.y = (area.exit.i + rowDiff) * 16 + map.x
       arrow.tl.moveBy(5, 0, 5).moveBy(-5, 0, 10).loop()
       arrow.ontouchend = ->
-        service.area.setSelected(selectedArea + 1)
-        location.href = 'map.html'
+        location.href = "map.html?area=#{selectedArea + 1}"
       core.rootScene.addChild arrow
     if selectedArea > 1
       arrow = new Sprite 16, 16
@@ -132,6 +136,5 @@ window.onload = ->
       arrow.y = (area.enter.i + rowDiff) * 16 + map.x
       arrow.tl.moveBy(-5, 0, 5).moveBy(5, 0, 10).loop()
       arrow.ontouchend = ->
-        service.area.setSelected(selectedArea - 1)
-        location.href = 'map.html'
+        location.href = "map.html?area=#{selectedArea - 1}"
       core.rootScene.addChild arrow

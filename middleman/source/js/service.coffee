@@ -38,8 +38,5 @@ service =
 
   area:
     master:{}
-    get: -> @master[@getSelected()]
-    getSelected: -> localStorage['area'] || 1
-    setSelected: (area) -> localStorage['area'] = area
 
 window.service = service
