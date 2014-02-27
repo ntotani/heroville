@@ -26,6 +26,12 @@ service =
       [0...4].map (i) -> if team[i] then team[i] else null
     setTeam: storage.setTeam
     calcCurrentHp: (hero, now) -> rpg.service.HeroService.calcCurrentHp hero, now
+    recoverAll: ->
+      heros = []
+      for k, v of @getAll()
+        v.returnAt = 0
+        heros.push v
+      rpg.service.HeroService.update(storage, heros)
 
   dungeon:
     get: (id) -> rpg.service.DungeonService.get id

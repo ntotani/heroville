@@ -36,7 +36,7 @@ script#empty type="text/html"
   .col-xs-6
     a.btn.btn-default.btn-lg.btn-block.navbar-btn href="javascript:history.back()" role="button" 戻る
   .col-xs-6
-    button#commit.btn.btn-primary.btn-lg.btn-block.navbar-btn type="button" 出発
+    button#commit.btn.btn-primary.btn-lg.btn-block.navbar-btn type="button" data-bind="css:{disabled:!validate()}" 出発
 
 - content_for :post_head
   sass:

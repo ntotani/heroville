@@ -17,6 +17,7 @@ $ ->
     teamTpl: (hero) -> if hero then 'hero' else 'empty'
     depth: [1..dungeon.depth].map (e) -> (txt:"#{dungeon.preDepth}#{e}#{dungeon.postDepth}", value:e)
     selectedDepth: dungeon.depth
+    validate: -> vm.team.every (e) -> e.hp() > 0
   ko.applyBindings vm
 
   setInterval ->
@@ -27,5 +28,6 @@ $ ->
   , 1000
 
   $('#commit').click ->
+    return unless vm.validate()
     service.dungeon.commit vm.selectedDepth
     location.href = 'battle.html'

@@ -56,8 +56,8 @@ dungeons =
     ]
     nameTable: ['ドーリョ', 'ブーカ', 'ジョーシ']
     boss:[
-      {name: 'グリーン勤怠', color:'TREE', plan:'MONKEY', effort:{attack:0, block:0, speed:0, health:0}, skills:[3]}
-      {name: '_RAND_', color:'TREE', plan:'MONKEY', effort:{attack:0, block:0, speed:0, health:0}, skills:[3]}
+      {name: 'グリーン勤怠', color:'TREE', plan:'MONKEY', effort:{attack:0, block:4, speed:0, health:0}, skills:[3]}
+      {name: '_RAND_', color:'TREE', plan:'MONKEY', effort:{attack:0, block:4, speed:0, health:0}, skills:[3]}
       {name: '_RAND_', color:'TREE', plan:'MONKEY', effort:{attack:0, block:0, speed:0, health:0}, skills:[3]}
       {name: '_RAND_', color:'TREE', plan:'MONKEY', effort:{attack:0, block:0, speed:0, health:0}, skills:[3]}
     ]
