@@ -1,7 +1,7 @@
 skills =
   1:
     id      : 1
-    name    : '火攻撃'
+    name    : '争いの火種'
     desc    : '火の攻撃'
     color   : 'FIRE'
     type    : 'ATTACK'
@@ -11,7 +11,7 @@ skills =
     hitRate : 100
   2:
     id      : 2
-    name    : '水攻撃'
+    name    : '水掛け論'
     desc    : '水の攻撃'
     color   : 'WATER'
     type    : 'ATTACK'
@@ -21,7 +21,7 @@ skills =
     hitRate : 100
   3:
     id      : 3
-    name    : '木攻撃'
+    name    : '言葉の綾'
     desc    : '木の攻撃'
     color   : 'TREE'
     type    : 'ATTACK'
