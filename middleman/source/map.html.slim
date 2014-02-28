@@ -6,10 +6,10 @@ title: map
 
 = partial "layouts/footer"
 
-#test.modal.fade
+#area.modal.fade data-backdrop="false"
   .modal-dialog
     .modal-content
-      .modal-body hi
+      .modal-body data-bind="text:area"
 
 - content_for :post_head
   sass:
@@ -18,6 +18,8 @@ title: map
       padding-bottom: 0
     .container
       padding: 0
+    .modal-dialog
+      margin-top: 60px
 
 - content_for :post_script
   script src="js/vendor/knockout-3.0.0.js"

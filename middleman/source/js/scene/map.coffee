@@ -1,10 +1,23 @@
 enchant()
 
+params = location.search.substr(1).split('&').reduce (p, e) ->
+  e = e.split('=')
+  p[e[0]] = e[1]
+  return p
+, {}
+selectedArea = parseInt(params.area || '1')
+area = service.area.master[selectedArea]
+
 $ ->
   vm =
     scene: 'map'
     footer: service.user.getProgress() > 1
+    area: area.name
   ko.applyBindings vm
+  $('#area').modal('show')
+  setTimeout ->
+    $('#area').modal('hide')
+  , 2000
 
 window.onload = ->
   progress = service.user.getProgress()
@@ -12,13 +25,6 @@ window.onload = ->
   hei = window.innerHeight - (if progress > 1 then 55 else 0)
   core = new Core(wid, hei)
   core.preload('img/map1.png', 'img/icon0.png').start().next ->
-    params = location.search.substr(1).split('&').reduce (p, e) ->
-      e = e.split('=')
-      p[e[0]] = e[1]
-      return p
-    , {}
-    selectedArea = parseInt(params.area || '1')
-    area = service.area.master[selectedArea]
     map = new Map(16, 16)
     map.image = core.assets['img/map1.png']
     col = Math.ceil(wid / 16)
