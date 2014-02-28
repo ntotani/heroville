@@ -236,7 +236,7 @@ dungeons =
     ]
     nameTable: philo
     boss:[
-      {name: 'ラスボス', color:'WATER', plan:'MONKEY', effort:{attack:13, block:13, speed:13, health:12}, skills:[2]}
+      {name: '冷静帰宅', color:'WATER', plan:'MONKEY', effort:{attack:13, block:13, speed:13, health:12}, skills:[2]}
       {name: '_RAND_', color:'WATER', plan:'MONKEY', effort:{attack:8, block:7, speed:7, health:7}, skills:[2]}
       {name: '_RAND_', color:'WATER',  plan:'MONKEY', effort:{attack:8, block:7, speed:7, health:7}, skills:[2]}
       {name: '_RAND_', color:'WATER',  plan:'MONKEY', effort:{attack:8, block:7, speed:7, health:7}, skills:[2]}
