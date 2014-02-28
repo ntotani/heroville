@@ -18,6 +18,8 @@ $ ->
     depth: [1..dungeon.depth].map (e) -> (txt:"#{dungeon.preDepth}#{e}#{dungeon.postDepth}", value:e)
     selectedDepth: dungeon.depth
     validate: -> vm.team.filter((e)->e isnt null).every (e) -> e.hp() > 0
+    canEditTeam: service.user.getProgress() > 3
+    editTeamHref: if @canEditTeam then 'team.html' else 'javascript:void 0'
   ko.applyBindings vm
 
   setInterval ->

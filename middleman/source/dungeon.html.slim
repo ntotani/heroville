@@ -7,11 +7,11 @@ title: dungeon
   p data-bind="text:desc"
 
 .panel.panel-default
-  .panel-heading href="team.html"
-    a href="team.html"
+  .panel-heading
+    a data-bind="attr:{href:editTeamHref}"
       h3.panel-title
         | パーティ
-        span.glyphicon.glyphicon-chevron-right.pull-right
+        span.glyphicon.glyphicon-chevron-right.pull-right data-bind="visible:canEditTeam"
   .panel-body
     .list-group data-bind="template:{name:teamTpl, foreach:team}"
 
@@ -24,7 +24,7 @@ script#hero type="text/html"
 script#empty type="text/html"
   .list-group-item ---
 
-.panel.panel-default
+.panel.panel-default data-bind="visible:depth.length > 1"
   .panel-heading
     h3.panel-title 目的地
   .panel-body

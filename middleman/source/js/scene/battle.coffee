@@ -164,5 +164,5 @@ $ ->
     core.rootScene.addChild avatarBg
     core.rootScene.addChild hero for id, hero of avatars
   docElem = $ document.documentElement
-  $('#enchant-stage').css(position:'fixed', top:0, left:(docElem.width() - 320) / 2, 'z-index': 1030)
+  $('#enchant-stage').css(position:'fixed', top:50, left:(docElem.width() - 320) / 2, 'z-index': 1030)
 

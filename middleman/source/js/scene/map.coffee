@@ -1,8 +1,15 @@
 enchant()
 
+$ ->
+  vm =
+    scene: 'map'
+    footer: service.user.getProgress() > 1
+  ko.applyBindings vm
+
 window.onload = ->
+  progress = service.user.getProgress()
   wid = window.innerWidth
-  hei = window.innerHeight - 55
+  hei = window.innerHeight - (if progress > 1 then 55 else 0)
   core = new Core(wid, hei)
   core.preload('img/map1.png', 'img/icon0.png').start().next ->
     params = location.search.substr(1).split('&').reduce (p, e) ->
@@ -17,7 +24,7 @@ window.onload = ->
     col = Math.ceil(wid / 16)
     row = Math.ceil(hei / 16)
     colDiff = (col - area.road[0].length) / 2 | 0
-    rowDiff = (row - area.road.length) / 2 | 0
+    rowDiff = ((row - 3 - area.road.length) / 2 | 0) + 3
 
     fill = (base, cells) ->
       bg = ((base for j in [0...col]) for i in [0...row])
@@ -72,7 +79,6 @@ window.onload = ->
         , {mini:10000, minj:10000, maxi:-1, maxj:-1}
         {i:edge.mini + (edge.maxi - edge.mini) / 2 | 0, j:edge.minj + (edge.maxj - edge.minj) / 2 | 0}
       .value()
-    progress = service.user.getProgress()
     point = {i:area.enter.i, j:area.enter.j}
     dungeons = _.sortBy(_.keys(dungeonCenter).filter((e) -> parseInt(e)), (a, b) -> a - b)
     roads = []
